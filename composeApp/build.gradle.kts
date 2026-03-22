@@ -62,7 +62,9 @@ android {
         applicationId = "com.xmelon.rubik_solver"
         minSdk = 28
         targetSdk = 36
-        versionCode = 1
+        versionCode = providers.exec {
+            commandLine("git", "rev-list", "--count", "HEAD")
+        }.standardOutput.asText.get().trim().toInt()
         versionName = "0.1.0"
     }
 

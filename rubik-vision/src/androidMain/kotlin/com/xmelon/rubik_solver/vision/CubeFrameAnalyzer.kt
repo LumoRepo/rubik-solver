@@ -220,7 +220,11 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
         if (nowStable != _centerStable.value) _centerStable.value = nowStable
 
         // 5. Emit StateFlows
-        _detectedWbRgbs.value = frameRgbs
+        // Copy required: frameRgbs is a reused pre-allocated array, so the same reference is
+        // always emitted. MutableStateFlow uses reference equality for arrays, meaning it would
+        // never re-emit after the first frame. The copy ensures a new reference each frame so
+        // Compose sees updates and recomputes overlay colors with fresh data.
+        _detectedWbRgbs.value = frameRgbs.copyOf()
         _confidence.value = frameConfidences.copyOf()
 
         // 6. Stability-transition events + SCAN_FRAME throttle

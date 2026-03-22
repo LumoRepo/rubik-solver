@@ -69,6 +69,7 @@ internal fun buildScanFaceOverrides(
             for (ci in 0..8) {
                 val c  = effectiveLiveColors.getOrNull(ci) ?: continue
                 val wb = liveWbRgbs.getOrElse(ci) { 0 }
+                if (wb == 0) continue
                 val o  = c.ordinal
                 rSum[o] += (wb shr 16) and 0xFF
                 gSum[o] += (wb shr  8) and 0xFF

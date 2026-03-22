@@ -324,7 +324,7 @@ private fun ColumnScope.SolveModeLayout(
             canGoNext = !vm.isSolved && vm.solveResult is SolveResult.Success,
             onPrev = { vm.goPrevStep() },
             onMiddle = {
-                if (vm.isSolved) onDone()
+                if (vm.isSolved) vm.restartScan()
                 else if (vm.currentStep == 0) vm.restartScan()
                 else vm.repeatStep()
             },
