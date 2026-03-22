@@ -33,24 +33,33 @@ jobs:
       - name: Build min2phaseCXX XCFramework
         run: ./rubik-solver/build-ios-framework.sh
 
-      # Verify Kotlin/Native compiles. The link+embed step runs inside xcodebuild
-      # via embedAndSignAppleFrameworkForXcode (avoids the AGP9+KMP hard error
-      # that assembleReleaseXCFramework triggers on full Android configuration).
+      # Compile Kotlin/Native sources for both iOS targets.
       - name: Compile Kotlin/Native (iosArm64 + iosSimulatorArm64)
         run: ./gradlew :composeApp:compileKotlinIosArm64 :composeApp:compileKotlinIosSimulatorArm64 :rubik-solver:compileKotlinIosArm64 :rubik-solver:compileKotlinIosSimulatorArm64
 
+      # Link + assemble ComposeApp.framework for the simulator target.
+      # This produces composeApp/build/xcode-frameworks/Debug/<sdk>/ComposeApp.framework
+      # and is passed to xcodebuild via FRAMEWORK_SEARCH_PATHS so the Swift
+      # compiler can find the module without relying on the DerivedData symlink.
+      - name: Assemble ComposeApp.framework (iosSimulatorArm64)
+        run: ./gradlew :composeApp:assembleDebugAppleFrameworkForXcodeIosSimulatorArm64
+
       # Build for iOS Simulator — no code signing required.
-      # xcodebuild triggers the "Run Gradle Build" phase which calls
-      # embedAndSignAppleFrameworkForXcode with the correct Xcode env vars,
-      # linking the Kotlin framework and placing it where Xcode expects it.
       - name: Build iOS app (simulator)
         run: |
+          # Locate the pre-built framework directory (SDK name includes Xcode version).
+          FMWK_DIR=$(find "$(pwd)/composeApp/build/xcode-frameworks/Debug" \
+            -maxdepth 1 -name "iphonesimulator*" -type d 2>/dev/null | head -1)
+          echo "Framework search path: ${FMWK_DIR:-(not found)}"
+          ls "${FMWK_DIR}/" 2>/dev/null || true
+
           xcodebuild build \
             -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \
             -sdk iphonesimulator \
             -arch arm64 \
             -configuration Debug \
+            FRAMEWORK_SEARCH_PATHS="${FMWK_DIR} \$(FRAMEWORK_SEARCH_PATHS)" \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
@@ -59,7 +68,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: iosApp-simulator
-          path: build/Build/Products/Debug-iphonesimulator/iosApp.app
+          path: |
+            **/Debug-iphonesimulator/iosApp.app
           if-no-files-found: warn
 
       # ── Device IPA (optional) ──────────────────────────────────────────────
