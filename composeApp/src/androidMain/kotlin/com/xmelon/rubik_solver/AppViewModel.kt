@@ -159,8 +159,7 @@ class AppViewModel : ViewModel() {
             }
         else liveColors
         analyzer.colorDetector.saveCheckpoint()
-        analyzer.colorDetector.calibrateFace(liveRgbs, correctedColors,
-            faceColor = CubeColor.expectedCenter(face))
+        analyzer.colorDetector.calibrateFace(liveRgbs, correctedColors)
         // Extra weight-3 update for manually overridden tiles — these are high-confidence
         // corrections that should pull the model more strongly than auto-classified tiles.
         if (liveRgbs.size >= 9) {

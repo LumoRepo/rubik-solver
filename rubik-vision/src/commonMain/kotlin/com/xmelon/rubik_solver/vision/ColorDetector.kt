@@ -77,23 +77,11 @@ class ColorDetector {
      * [tileRgbs] — 9 ARGB ints (one per tile)
      * [confirmedColors] — 9 confirmed CubeColors (one per tile)
      */
-    /**
-     * RED and ORANGE are easily confused because their camera LAB values overlap
-     * significantly. Allowing tiles on other faces to calibrate these models shifts
-     * their means into each other's territory, causing the wrong color to win NLL.
-     * Only calibrate RED when we're confirming the RED face, ORANGE when confirming
-     * the ORANGE face. All other colors calibrate freely.
-     */
-    private val ISOLATED_COLORS = setOf(CubeColor.RED, CubeColor.ORANGE)
-
-    fun calibrateFace(tileRgbs: IntArray, confirmedColors: List<CubeColor>,
-                      faceColor: CubeColor? = null) {
+    fun calibrateFace(tileRgbs: IntArray, confirmedColors: List<CubeColor>) {
         if (tileRgbs.size != 9 || confirmedColors.size != 9) return
         for (i in 0..8) {
-            val color = confirmedColors[i]
-            if (color in ISOLATED_COLORS && color != faceColor) continue
             val lab = LabConverter.sRgbToLab(tileRgbs[i])
-            models[color]!!.update(lab, weight = 1f)
+            models[confirmedColors[i]]!!.update(lab, weight = 1f)
         }
         logd { "CAL calibrateFace ${calibrationStr()}" }
     }
