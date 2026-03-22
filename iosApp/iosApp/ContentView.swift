@@ -1,5 +1,5 @@
 import SwiftUI
-import composeApp
+import ComposeApp
 
 struct ContentView: View {
     var body: some View {
