@@ -1,0 +1,32 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Gradle: assembleDebug",
+			"type": "shell",
+			"command": "./gradlew assembleDebug",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": [],
+			"detail": "Build debug APK via Gradle wrapper."
+		},
+		{
+			"label": "Gradle: assembleRelease",
+			"type": "shell",
+			"command": "./gradlew assembleRelease",
+			"group": "build",
+			"problemMatcher": [],
+			"detail": "Build release APK via Gradle wrapper."
+		},
+		{
+			"label": "Gradle: test",
+			"type": "shell",
+			"command": "./gradlew test",
+			"group": "test",
+			"problemMatcher": [],
+			"detail": "Run all unit tests via Gradle wrapper."
+		}
+	]
+}

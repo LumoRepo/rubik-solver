@@ -1,0 +1,108 @@
+<resources>
+    <string name="app_name">Rubik Solver</string>
+
+    <!-- ── Face / color names ─────────────────────────────────────────────
+         Used wherever a face's center color is shown to the user.
+         Translators: keep these short (single word if possible). -->
+    <string name="color_white">White</string>
+    <string name="color_yellow">Yellow</string>
+    <string name="color_red">Red</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_green">Green</string>
+
+    <!-- ── Home screen ───────────────────────────────────────────────────── -->
+    <string name="home_title">Rubik\'s Solver</string>
+    <string name="home_subtitle">Scan &amp; solve the standard 3×3 Rubik\'s cube. Have the cube oriented as shown below</string>
+    <string name="home_status_loading">Loading…</string>
+    <string name="home_status_ready">Ready</string>
+    <!-- %s = error message from the exception -->
+    <string name="home_status_error">Setup failed: %s</string>
+    <string name="home_button_scan">Scan Cube</string>
+
+    <!-- ── Camera permission ─────────────────────────────────────────────── -->
+    <string name="permission_camera_required">Camera permission is required to scan the cube.</string>
+    <string name="permission_grant">Grant Permission</string>
+    <!-- %s = system error message -->
+    <string name="camera_error">Camera error: %s</string>
+    <string name="camera_retry">Retry</string>
+
+    <!-- ── Scan screen ───────────────────────────────────────────────────── -->
+    <string name="scan_initial_position">Initial Position</string>
+    <string name="scan_initial_hint">Rotate to scan the center WHITE, with RED center on the bottom side</string>
+    <!-- %s = rotation direction (e.g. "Up" or "Left") -->
+    <string name="scan_rotate_title">Rotate %s</string>
+    <!-- %s = face color name (e.g. "Red") -->
+    <string name="scan_rotate_hint">Rotate the cube to face %s</string>
+    <!-- %s = face color name (e.g. "Red") -->
+    <string name="scan_face_title">Scan %s</string>
+    <!-- %s = lowercase face color name (e.g. "red") -->
+    <string name="scan_face_hint">Rotate the cube to align the front center %s tile</string>
+    <string name="scan_face_edit_hint">Tap a tile to change its color if incorrect</string>
+    <!-- %s = color name (e.g. "Orange") -->
+    <string name="scan_tile_color_warning">This tile color is not %s — please select the correct color</string>
+    <!-- Rotation direction labels shown in the "Rotate …" title -->
+    <string name="scan_direction_up">Up</string>
+    <string name="scan_direction_left">Left</string>
+    <!-- Capture button states -->
+    <string name="scan_button_align">Align cube</string>
+    <string name="scan_button_confirm">Scan</string>
+    <string name="scan_button_edit">Edit</string>
+    <!-- Accessibility description for the "clear scanned face" icon button -->
+    <string name="scan_clear_cd">Clear scanned face</string>
+
+    <!-- ── Solve screen ──────────────────────────────────────────────────── -->
+    <string name="solve_error_title">Invalid Scan</string>
+    <string name="solve_initial_title">Initial Position</string>
+    <string name="solve_initial_subtitle">Rotate cube to face RED with WHITE on top</string>
+    <!-- %1$s = move notation (e.g. "R"), %2$s = face name (e.g. "Right"), %3$s = short direction (e.g. "CW") -->
+    <string name="solve_move_title">(%1$s) %2$s %3$s</string>
+    <!-- %1$s = face name uppercased (e.g. "RIGHT"), %2$s = full direction (e.g. "ClockWise") -->
+    <string name="solve_move_subtitle">Turn %1$s side %2$s</string>
+    <string name="solve_solved_title">Solved! 🎉</string>
+    <string name="solve_solved_subtitle">Your cube is now solved, congratulations!</string>
+    <string name="solve_button_rescan">Restart</string>
+    <string name="solve_button_solve">Solve</string>
+    <string name="solve_button_repeat">Replay</string>
+    <string name="solve_button_restart">Restart</string>
+    <!-- Face names used in move descriptions -->
+    <string name="solve_face_top">Top</string>
+    <string name="solve_face_bottom">Bottom</string>
+    <string name="solve_face_left">Left</string>
+    <string name="solve_face_right">Right</string>
+    <string name="solve_face_front">Front</string>
+    <string name="solve_face_back">Back</string>
+    <!-- Short direction abbreviations shown in the move title -->
+    <string name="solve_dir_cw">CW</string>
+    <string name="solve_dir_ccw">CCW</string>
+    <string name="solve_dir_180">180°</string>
+    <!-- Full direction names shown in the move subtitle -->
+    <string name="solve_direction_clockwise">ClockWise</string>
+    <string name="solve_direction_counterclockwise">Counter-ClockWise</string>
+    <string name="solve_direction_180deg">180 Degrees</string>
+
+    <!-- ── Solver error descriptions ────────────────────────────────────── -->
+    <!-- Error 1: wrong number of tiles per color (detail provided separately) -->
+    <string name="solver_error_1">Wrong tile counts — one or more colors appear too few or too many times.</string>
+    <!-- Error 2–8: codes returned verbatim by the min2phase library -->
+    <string name="solver_error_2">A misscanned edge — one edge piece appears twice or not at all.</string>
+    <string name="solver_error_3">A misscanned edge — one edge needs flipping.</string>
+    <string name="solver_error_4">A misscanned corner — one corner piece appears twice or not at all.</string>
+    <string name="solver_error_5">A misscanned corner — one corner is twisted.</string>
+    <string name="solver_error_6">Two pieces appear swapped — check adjacent faces match at the edges.</string>
+    <string name="solver_error_7">No solution exists for the given max depth.</string>
+    <string name="solver_error_8">Solver timeout.</string>
+    <!-- Fallback errors from the solver wrapper -->
+    <string name="solver_error_timeout">Solver timed out — try again.</string>
+    <string name="solver_error_exception">An unexpected error occurred in the solver.</string>
+
+    <!-- ── Progress bar ──────────────────────────────────────────────────── -->
+    <string name="progress_idle">Scan your cube to begin</string>
+    <!-- %1$s = face color name, %2$d = current face index (1–6) -->
+    <string name="progress_scanning">Scanning · %1$s face (%2$d / 6)</string>
+    <string name="progress_solving">Solving…</string>
+    <string name="progress_solving_initial">Solving · Set initial position</string>
+    <string name="progress_solved">Solved!</string>
+    <!-- %1$d = current move number, %2$d = total moves -->
+    <string name="progress_solving_move">Solving · Move %1$d of %2$d</string>
+</resources>

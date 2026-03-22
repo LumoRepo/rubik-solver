@@ -1,0 +1,15 @@
+{
+    "antigravity.marketplaceGalleryItemURL": "https://marketplace.visualstudio.com/items",
+    "antigravity.marketplaceExtensionGalleryServiceURL": "https://marketplace.visualstudio.com/_apis/public/gallery",
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "java.jdt.ls.java.home": "C:\\Program Files\\Microsoft\\jdk-25.0.2.10-hotspot",
+    "java.configuration.runtimes": [
+      {
+        "name": "JavaSE-25",
+        "path": "C:\\Program Files\\Microsoft\\jdk-25.0.2.10-hotspot",
+        "default": true
+      }
+    ],
+    "java.import.gradle.enabled": true,
+    "java.import.gradle.wrapper.enabled": true
+}

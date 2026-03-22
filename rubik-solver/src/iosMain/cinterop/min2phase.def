@@ -1,0 +1,4 @@
+headers = min2phase_c.h
+headerFilter = min2phase_c.h
+staticLibraries = libmin2phase.a
+language = C

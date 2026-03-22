@@ -1,0 +1,44 @@
+name: iOS
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Grant execute permission for build-ios-framework.sh
+        run: chmod +x rubik-solver/build-ios-framework.sh
+
+      - name: Build min2phaseCXX XCFramework
+        run: ./rubik-solver/build-ios-framework.sh
+
+      - name: Compile Kotlin/Native (iosArm64)
+        run: ./gradlew :composeApp:compileKotlinIosArm64 :rubik-solver:compileKotlinIosArm64
+
+      - name: Build iOS framework (embedAndSign)
+        run: ./gradlew :composeApp:assembleReleaseXCFramework
+
+      - name: Upload iOS framework
+        uses: actions/upload-artifact@v4
+        with:
+          name: ComposeApp-xcframework
+          path: composeApp/build/XCFrameworks/release/
