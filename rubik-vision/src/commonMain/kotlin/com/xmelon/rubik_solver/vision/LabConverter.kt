@@ -52,7 +52,7 @@ object LabConverter {
     private const val DELTA = 6f / 29f
 
     private fun f(t: Float): Float =
-        if (t > DELTA * DELTA * DELTA) Math.cbrt(t.toDouble()).toFloat()
+        if (t > DELTA * DELTA * DELTA) t.toDouble().pow(1.0 / 3.0).toFloat()
         else t / (3f * DELTA * DELTA) + 4f / 29f
 
     private fun fInv(t: Float): Float =

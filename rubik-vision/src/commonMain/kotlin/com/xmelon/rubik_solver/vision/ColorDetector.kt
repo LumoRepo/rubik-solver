@@ -145,15 +145,15 @@ class ColorDetector {
     fun calibrationStr(): String =
         CubeColor.entries.joinToString(" ") { c ->
             val m = models[c]!!
-            "%s[n=%.0f L=%.0f a=%.0f b=%.0f]".format(c.name, m.n, m.mean[0], m.mean[1], m.mean[2])
+            format("%s[n=%.0f L=%.0f a=%.0f b=%.0f]", c.name, m.n, m.mean[0], m.mean[1], m.mean[2])
         }
 
     /** Verbose model dump including effective variance and weighted-sample count. */
     fun modelDumpStr(): String =
         CubeColor.entries.joinToString(" ") { c ->
             val m = models[c]!!
-            "${c.name}[L=%.1f a=%.1f b=%.1f v=%.0f n=%.0f]"
-                .format(m.mean[0], m.mean[1], m.mean[2], m.variance, m.n)
+            format("${c.name}[L=%.1f a=%.1f b=%.1f v=%.0f n=%.0f]",
+                m.mean[0], m.mean[1], m.mean[2], m.variance, m.n)
         }
 
     /**

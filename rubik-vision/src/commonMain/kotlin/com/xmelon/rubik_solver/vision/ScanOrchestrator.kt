@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * Guides the user through scanning all 6 faces of the cube and accumulates the
  * scanned colors into a single [CubeState].
  */
-private fun log(msg: String) { android.util.Log.d("RubikSolver", msg) }
+private fun log(msg: String) { println("[RubikSolver] $msg") }
 
 class ScanOrchestrator {
 
@@ -21,7 +21,7 @@ class ScanOrchestrator {
     // @Volatile: ensures writes from one thread are immediately visible to reads on others.
     // All mutations happen on the main thread via onClick, but @Volatile costs nothing here
     // and guards against accidental cross-thread access in the future.
-    @Volatile private var currentIndex = 0
+    @kotlin.concurrent.Volatile private var currentIndex = 0
     
     // Store the 54 facelets as we collect them
     private val _scannedFacelets = MutableStateFlow(IntArray(54) { -1 })

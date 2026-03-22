@@ -5,10 +5,12 @@ import com.xmelon.rubik_solver.model.Move
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
 import min2phase.min2phase_c_init
 import min2phase.min2phase_c_solve
 
+@OptIn(ExperimentalForeignApi::class)
 actual object CubeSolver {
     actual fun initialize() {
         min2phase_c_init()
