@@ -99,6 +99,14 @@ class ColorDetector {
     }
 
     /**
+     * Updates the model for [color] directly from a LAB observation.
+     * Used by the center-tile seed path which already works in LAB space.
+     */
+    fun calibrateTileLab(lab: FloatArray, color: CubeColor, weight: Float = 1f) {
+        models[color]!!.update(lab, weight)
+    }
+
+    /**
      * Returns the next color in the NLL ranking for [wbRgb], cycling past [currentColor].
      * All 6 colors are sorted by NLL score ascending (best match first); each call advances
      * one step in that ranking, wrapping around, covering all 6 colors without repeating.

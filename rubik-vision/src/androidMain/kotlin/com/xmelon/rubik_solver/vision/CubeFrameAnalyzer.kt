@@ -106,6 +106,10 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
 
     @Volatile private var lastLoggedColors: List<CubeColor> = emptyList()
 
+    // One-shot flag: seed expected center color model once the temporal buffer is warm.
+    // Reset whenever we switch to a new face so each face gets a fresh seed.
+    @Volatile private var centerSeedDone: Boolean = false
+
     /**
      * Clears temporal LAB buffers and resets center stability.
      * Call when the user switches to a new face.
@@ -117,6 +121,7 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
         _centerStable.value = false
         wasStable = false
         lastScanFrameMs = 0L
+        centerSeedDone = false
     }
 
     override fun analyze(image: ImageProxy) {
@@ -196,6 +201,24 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
             buf.addLast(rawLab[i].copyOf())
             if (buf.size > TEMPORAL_BUFFER_SIZE) buf.removeFirst()
             labMedian(buf, smoothedLab[i])
+        }
+
+        // 2.5. One-shot center seed: once the temporal buffer is warm, calibrate the expected
+        // face color model with all buffered center tile observations. This overcomes prior
+        // mismatch when a previously-calibrated color (e.g. RED) has low variance and its
+        // mean has drifted close to the expected color's camera appearance (e.g. ORANGE).
+        // After TEMPORAL_BUFFER_SIZE weight-1 updates the expected model has n > MIN_SAMPLES
+        // so its NLL uses the actual variance of the sensor readings rather than the wide
+        // uncalibrated prior variance, making it competitive against the calibrated rival.
+        val expectedForSeed = expectedCenterColor
+        if (!centerSeedDone && expectedForSeed != null
+                && tileLabRingBuffers[4].size >= TEMPORAL_BUFFER_SIZE) {
+            for (lab in tileLabRingBuffers[4]) {
+                colorDetector.calibrateTileLab(lab, expectedForSeed)
+            }
+            centerSeedDone = true
+            Log.i(TAG, "CENTER_SEED color=${expectedForSeed.name} " +
+                "lab=[%.1f,%.1f,%.1f]".format(smoothedLab[4][0], smoothedLab[4][1], smoothedLab[4][2]))
         }
 
         // 3. Classify + build output arrays (reuse pre-allocated frameColors/frameConfidences/frameRgbs)
