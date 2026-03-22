@@ -33,12 +33,3 @@ jobs:
 
       - name: Compile Kotlin/Native (iosArm64)
         run: ./gradlew :composeApp:compileKotlinIosArm64 :rubik-solver:compileKotlinIosArm64 --info
-
-      - name: Build iOS framework (embedAndSign)
-        run: ./gradlew :composeApp:assembleReleaseXCFramework
-
-      - name: Upload iOS framework
-        uses: actions/upload-artifact@v4
-        with:
-          name: ComposeApp-xcframework
-          path: composeApp/build/XCFrameworks/release/
