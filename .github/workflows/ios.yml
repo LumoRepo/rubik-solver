@@ -33,15 +33,16 @@ jobs:
       - name: Build min2phaseCXX XCFramework
         run: ./rubik-solver/build-ios-framework.sh
 
-      # Combine compile + assembleReleaseXCFramework in one invocation so they
-      # share a single Gradle configuration phase (avoids AGP9+KMP compat error
-      # that occurs on fresh configuration of assembleReleaseXCFramework alone).
-      - name: Compile Kotlin/Native + assemble XCFramework
-        run: ./gradlew :composeApp:compileKotlinIosArm64 :rubik-solver:compileKotlinIosArm64 :composeApp:assembleReleaseXCFramework
+      # Verify Kotlin/Native compiles. The link+embed step runs inside xcodebuild
+      # via embedAndSignAppleFrameworkForXcode (avoids the AGP9+KMP hard error
+      # that assembleReleaseXCFramework triggers on full Android configuration).
+      - name: Compile Kotlin/Native (iosArm64 + iosSimulatorArm64)
+        run: ./gradlew :composeApp:compileKotlinIosArm64 :composeApp:compileKotlinIosSimulatorArm64 :rubik-solver:compileKotlinIosArm64 :rubik-solver:compileKotlinIosSimulatorArm64
 
       # Build for iOS Simulator — no code signing required.
-      # This triggers the Run Gradle Build phase in the Xcode project which calls
-      # embedAndSignAppleFrameworkForXcode, fully exercising the Kotlin→Swift link.
+      # xcodebuild triggers the "Run Gradle Build" phase which calls
+      # embedAndSignAppleFrameworkForXcode with the correct Xcode env vars,
+      # linking the Kotlin framework and placing it where Xcode expects it.
       - name: Build iOS app (simulator)
         run: |
           xcodebuild build \
@@ -52,8 +53,7 @@ jobs:
             -configuration Debug \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO \
-            | xcpretty || cat /tmp/xcodebuild.log 2>/dev/null || true
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Upload simulator app
         uses: actions/upload-artifact@v4
