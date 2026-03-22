@@ -82,6 +82,7 @@ android {
             firebaseAppDistribution {
                 artifactType = "APK"
                 serviceCredentialsFile = "composeApp/xmelon-rubik-solver-firebase-admin.json"
+                testers = ""
             }
         }
     }
