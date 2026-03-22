@@ -12,8 +12,8 @@
     <string name="color_green">Green</string>
 
     <!-- ── Home screen ───────────────────────────────────────────────────── -->
-    <string name="home_title">Rubik\'s Solver</string>
-    <string name="home_subtitle">Scan &amp; solve the standard 3×3 Rubik\'s cube. Have the cube oriented as shown below</string>
+    <string name="home_title">Rubik's Solver</string>
+    <string name="home_subtitle">Scan &amp; solve the standard 3×3 Rubik's cube. Have the cube oriented as shown below</string>
     <string name="home_status_loading">Loading…</string>
     <string name="home_status_ready">Ready</string>
     <!-- %s = error message from the exception -->

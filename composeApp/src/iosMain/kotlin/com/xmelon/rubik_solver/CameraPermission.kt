@@ -12,5 +12,6 @@ actual fun rememberCameraPermissionState(onResult: (Boolean) -> Unit): () -> Uni
     AVCaptureDevice.requestAccessForMediaType(AVMediaTypeVideo) { granted -> onResult(granted) }
 }
 
+@Composable
 actual fun checkCameraPermission(): Boolean =
     AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo) == AVAuthorizationStatusAuthorized
