@@ -33,5 +33,77 @@ jobs:
       - name: Build min2phaseCXX XCFramework
         run: ./rubik-solver/build-ios-framework.sh
 
-      - name: Compile Kotlin/Native (iosArm64)
-        run: ./gradlew :composeApp:compileKotlinIosArm64 :rubik-solver:compileKotlinIosArm64 --info
+      # Combine compile + assembleReleaseXCFramework in one invocation so they
+      # share a single Gradle configuration phase (avoids AGP9+KMP compat error
+      # that occurs on fresh configuration of assembleReleaseXCFramework alone).
+      - name: Compile Kotlin/Native + assemble XCFramework
+        run: ./gradlew :composeApp:compileKotlinIosArm64 :rubik-solver:compileKotlinIosArm64 :composeApp:assembleReleaseXCFramework
+
+      # Build for iOS Simulator — no code signing required.
+      # This triggers the Run Gradle Build phase in the Xcode project which calls
+      # embedAndSignAppleFrameworkForXcode, fully exercising the Kotlin→Swift link.
+      - name: Build iOS app (simulator)
+        run: |
+          xcodebuild build \
+            -project iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -sdk iphonesimulator \
+            -arch arm64 \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty || cat /tmp/xcodebuild.log 2>/dev/null || true
+
+      - name: Upload simulator app
+        uses: actions/upload-artifact@v4
+        with:
+          name: iosApp-simulator
+          path: build/Build/Products/Debug-iphonesimulator/iosApp.app
+          if-no-files-found: warn
+
+      # ── Device IPA (optional) ──────────────────────────────────────────────
+      # Requires Apple Developer certificates stored as GitHub secrets:
+      #   APPLE_CERTIFICATE_BASE64   – p12 exported from Keychain, base64-encoded
+      #   APPLE_CERTIFICATE_PASSWORD – p12 export password
+      #   APPLE_PROVISIONING_PROFILE – .mobileprovision file, base64-encoded
+      #
+      # Uncomment the steps below and add those secrets to enable device builds.
+      # -----------------------------------------------------------------------
+      # - name: Import signing certificate
+      #   env:
+      #     CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+      #     CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      #   run: |
+      #     echo "$CERTIFICATE_BASE64" | base64 --decode > /tmp/cert.p12
+      #     security create-keychain -p "" build.keychain
+      #     security import /tmp/cert.p12 -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+      #     security list-keychains -s build.keychain
+      #     security default-keychain -s build.keychain
+      #     security unlock-keychain -p "" build.keychain
+      #     security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
+      #
+      # - name: Install provisioning profile
+      #   env:
+      #     PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+      #   run: |
+      #     mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+      #     echo "$PROVISIONING_PROFILE" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/app.mobileprovision
+      #
+      # - name: Archive and export IPA
+      #   run: |
+      #     xcodebuild archive \
+      #       -project iosApp/iosApp.xcodeproj \
+      #       -scheme iosApp \
+      #       -sdk iphoneos \
+      #       -archivePath build/iosApp.xcarchive
+      #     xcodebuild -exportArchive \
+      #       -archivePath build/iosApp.xcarchive \
+      #       -exportPath build/iosApp-ipa \
+      #       -exportOptionsPlist iosApp/ExportOptions.plist
+      #
+      # - name: Upload IPA
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: iosApp-device
+      #     path: build/iosApp-ipa/*.ipa
