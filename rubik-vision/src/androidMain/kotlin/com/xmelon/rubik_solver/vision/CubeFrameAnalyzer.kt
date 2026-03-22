@@ -212,7 +212,12 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
         // uncalibrated prior variance, making it competitive against the calibrated rival.
         val expectedForSeed = expectedCenterColor
         if (!centerSeedDone && expectedForSeed != null
-                && tileLabRingBuffers[4].size >= TEMPORAL_BUFFER_SIZE) {
+                && tileLabRingBuffers[4].size >= TEMPORAL_BUFFER_SIZE
+                && colorDetector.rankForLab(smoothedLab[4], expectedForSeed) <= 2) {
+            // Guard: only seed when the expected color already ranks #1 or #2 for this tile.
+            // If a completely wrong tile occupies the center (cube not yet aligned), the
+            // expected color would rank 3–6 and seeding would corrupt the model.
+            // For the RED/ORANGE confusion case the expected color ranks 2nd → seed fires.
             for (lab in tileLabRingBuffers[4]) {
                 colorDetector.calibrateTileLab(lab, expectedForSeed)
             }

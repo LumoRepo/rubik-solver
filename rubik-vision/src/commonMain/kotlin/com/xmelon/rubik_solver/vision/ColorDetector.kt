@@ -174,6 +174,12 @@ class ColorDetector {
         return sorted.indexOf(color) + 1
     }
 
+    /** 1-based NLL rank of [color] for an already-computed [lab] vector. */
+    fun rankForLab(lab: FloatArray, color: CubeColor): Int {
+        val sorted = CubeColor.entries.sortedBy { models[it]!!.score(lab) }
+        return sorted.indexOf(color) + 1
+    }
+
     /**
      * Exposes the NLL score for [color] at [lab].
      * Internal — used by tests to verify calibration effects.
