@@ -29,8 +29,8 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
     companion object {
         private const val TAG = "CubeFrameAnalyzer"
         private const val TEMPORAL_BUFFER_SIZE = 8
-        private const val CENTER_STABLE_FRAMES = 6
-        private const val CENTER_STABLE_CONFIDENCE = 0.10f
+        private const val CENTER_STABLE_FRAMES = 10
+        private const val CENTER_STABLE_CONFIDENCE = 0.02f
         private const val SCAN_FRAME_INTERVAL_MS = 1000L
     }
 
