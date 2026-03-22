@@ -26,6 +26,13 @@ jobs:
       - name: Run unit tests
         run: ./gradlew :rubik-model:jvmTest :rubik-vision:testDebugUnitTest
 
+      - name: Install consistent debug keystore
+        env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p "$HOME/.android"
+          echo "$DEBUG_KEYSTORE_BASE64" | base64 -d > "$HOME/.android/debug.keystore"
+
       - name: Build debug APK
         run: ./gradlew :composeApp:assembleDebug
 
