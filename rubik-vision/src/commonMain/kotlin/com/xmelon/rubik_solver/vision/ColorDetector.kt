@@ -180,11 +180,8 @@ class ColorDetector {
         return sorted.indexOf(color) + 1
     }
 
-    /**
-     * Exposes the NLL score for [color] at [lab].
-     * Internal — used by tests to verify calibration effects.
-     */
-    internal fun scoreFor(color: CubeColor, lab: FloatArray): Float = models[color]!!.score(lab)
+    /** NLL score for [color] at [lab]. Lower = better match. */
+    fun scoreFor(color: CubeColor, lab: FloatArray): Float = models[color]!!.score(lab)
 
     // =====================================================================
     //  Private helpers

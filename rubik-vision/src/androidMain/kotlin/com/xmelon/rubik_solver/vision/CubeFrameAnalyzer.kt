@@ -30,7 +30,13 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
         private const val TAG = "CubeFrameAnalyzer"
         private const val TEMPORAL_BUFFER_SIZE = 8
         private const val CENTER_STABLE_FRAMES = 10
-        private const val CENTER_STABLE_CONFIDENCE = 0.02f
+        // NLL gate for center tile: is it plausibly the expected color?
+        // Replaces the old winner-takes-all confidence check.
+        // Prior NLL values: WHITE≈6.3, RED≈6.9, ORANGE≈7.8, others ≈5.7–7.5.
+        // A completely wrong tile scores 14–20+. Threshold 8.2 admits all expected
+        // colors including the hardest case (ORANGE, NLL≈7.8) while blocking
+        // a misaligned RED tile when scanning ORANGE (NLL≈8.1).
+        private const val CENTER_STABLE_MAX_NLL = 8.2f
         private const val SCAN_FRAME_INTERVAL_MS = 1000L
     }
 
@@ -106,10 +112,6 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
 
     @Volatile private var lastLoggedColors: List<CubeColor> = emptyList()
 
-    // One-shot flag: seed expected center color model once the temporal buffer is warm.
-    // Reset whenever we switch to a new face so each face gets a fresh seed.
-    @Volatile private var centerSeedDone: Boolean = false
-
     /**
      * Clears temporal LAB buffers and resets center stability.
      * Call when the user switches to a new face.
@@ -121,7 +123,6 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
         _centerStable.value = false
         wasStable = false
         lastScanFrameMs = 0L
-        centerSeedDone = false
     }
 
     override fun analyze(image: ImageProxy) {
@@ -203,29 +204,6 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
             labMedian(buf, smoothedLab[i])
         }
 
-        // 2.5. One-shot center seed: once the temporal buffer is warm, calibrate the expected
-        // face color model with all buffered center tile observations. This overcomes prior
-        // mismatch when a previously-calibrated color (e.g. RED) has low variance and its
-        // mean has drifted close to the expected color's camera appearance (e.g. ORANGE).
-        // After TEMPORAL_BUFFER_SIZE weight-1 updates the expected model has n > MIN_SAMPLES
-        // so its NLL uses the actual variance of the sensor readings rather than the wide
-        // uncalibrated prior variance, making it competitive against the calibrated rival.
-        val expectedForSeed = expectedCenterColor
-        if (!centerSeedDone && expectedForSeed != null
-                && tileLabRingBuffers[4].size >= TEMPORAL_BUFFER_SIZE
-                && colorDetector.rankForLab(smoothedLab[4], expectedForSeed) <= 2) {
-            // Guard: only seed when the expected color already ranks #1 or #2 for this tile.
-            // If a completely wrong tile occupies the center (cube not yet aligned), the
-            // expected color would rank 3–6 and seeding would corrupt the model.
-            // For the RED/ORANGE confusion case the expected color ranks 2nd → seed fires.
-            for (lab in tileLabRingBuffers[4]) {
-                colorDetector.calibrateTileLab(lab, expectedForSeed)
-            }
-            centerSeedDone = true
-            Log.i(TAG, "CENTER_SEED color=${expectedForSeed.name} " +
-                "lab=[%.1f,%.1f,%.1f]".format(smoothedLab[4][0], smoothedLab[4][1], smoothedLab[4][2]))
-        }
-
         // 3. Classify + build output arrays (reuse pre-allocated frameColors/frameConfidences/frameRgbs)
         frameColors.clear()
         for (i in 0..8) {
@@ -235,11 +213,15 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
             frameRgbs[i] = LabConverter.labToSRgb(smoothedLab[i])
         }
 
-        // 4. Center stability: classified == expected AND confidence gate AND N consecutive frames
+        // 4. Center stability: expected color's NLL for center tile is below threshold,
+        // sustained for N consecutive frames.
+        // This bypasses the winner-takes-all classifier — an orange tile can have NLL 7.8
+        // vs the ORANGE prior even while RED (NLL 6.4) "wins" the classification contest.
+        // Threshold 8.2 admits all expected colors (max prior NLL ≈ 7.8 for ORANGE) while
+        // rejecting a clearly wrong tile (e.g. GREEN in WHITE center scores 17+).
         val expected = expectedCenterColor
         val centerMatch = expected != null
-                && frameColors[4] == expected
-                && frameConfidences[4] >= CENTER_STABLE_CONFIDENCE
+                && colorDetector.scoreFor(expected, smoothedLab[4]) < CENTER_STABLE_MAX_NLL
         val newCount = if (centerMatch)
             minOf(consecutiveCenterInRange.get() + 1, CENTER_STABLE_FRAMES)
         else 0
