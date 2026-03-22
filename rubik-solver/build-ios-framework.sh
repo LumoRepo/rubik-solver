@@ -1,6 +1,7 @@
 #!/bin/bash
-# Build min2phaseCXX + C wrapper as an XCFramework for iOS arm64 + simulator (arm64 + x86_64).
-# Run this script on macOS with Xcode 16+ installed.
+# Build min2phaseCXX + C wrapper as an XCFramework for iOS.
+# Builds arm64 device + arm64 simulator (Apple Silicon CI / M-series Mac).
+# x86_64 simulator omitted — no longer needed for arm64-only CI or M-series Macs.
 # Output: rubik-solver/min2phaseXCFramework/min2phase.xcframework
 set -e
 
@@ -14,11 +15,13 @@ if [ ! -d "$SRC/include/min2phase" ]; then
     exit 1
 fi
 
-# build_slice ARCH SDK
+# build_slice ARCH SDK BUILD_SUFFIX VERSION_FLAG
 # Builds min2phase from CMake, then compiles + merges the C wrapper into the .a
+# BUILD_SUFFIX distinguishes device vs simulator build dirs for the same arch.
+# VERSION_FLAG is the clang deployment-target flag (-mios-version-min or -mios-simulator-version-min).
 build_slice() {
-    local ARCH=$1 SDK=$2
-    local BUILD_DIR="$SRC/build-$ARCH"
+    local ARCH=$1 SDK=$2 SUFFIX=$3 VERSION_FLAG=$4
+    local BUILD_DIR="$SRC/build-$SUFFIX"
     local SYSROOT CLANG CLANGXX
     SYSROOT=$(xcrun --sdk "$SDK" --show-sdk-path)
     CLANG=$(xcrun --sdk "$SDK" -f clang)
@@ -47,12 +50,16 @@ build_slice() {
     # Find the built static library
     local LIB
     LIB=$(find "$BUILD_DIR" -name "libmin2phase.a" | head -1)
+    if [ -z "$LIB" ]; then
+        echo "ERROR: libmin2phase.a not found in $BUILD_DIR"
+        exit 1
+    fi
 
     # Compile the C wrapper and add it into the library
     "$CLANGXX" -c \
         -arch "$ARCH" \
         -isysroot "$SYSROOT" \
-        -mios-version-min=15.0 \
+        "$VERSION_FLAG" \
         -std=c++14 \
         -I"$SRC/include" \
         -I"$WRAPPER/include" \
@@ -63,64 +70,26 @@ build_slice() {
 }
 
 echo "Building arm64 device slice..."
-build_slice arm64 iphoneos
-
-echo "Building x86_64 simulator slice..."
-build_slice x86_64 iphonesimulator
+build_slice arm64 iphoneos arm64-device -mios-version-min=15.0
 
 echo "Building arm64 simulator slice..."
-ARM64_SIM_DIR="$SRC/build-arm64-sim"
-SYSROOT_SIM=$(xcrun --sdk iphonesimulator --show-sdk-path)
-CLANGXX_SIM=$(xcrun --sdk iphonesimulator -f clang++)
+build_slice arm64 iphonesimulator arm64-sim -mios-simulator-version-min=15.0
 
-cmake -S "$SRC" -B "$ARM64_SIM_DIR" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_SYSTEM_NAME=iOS \
-    -DCMAKE_OSX_SYSROOT="$SYSROOT_SIM" \
-    -DCMAKE_OSX_ARCHITECTURES=arm64 \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
-    -DCMAKE_C_COMPILER="$(xcrun --sdk iphonesimulator -f clang)" \
-    -DCMAKE_CXX_COMPILER="$CLANGXX_SIM" \
-    -DBUILD_SERVER=OFF 2>/dev/null || \
-cmake -S "$SRC" -B "$ARM64_SIM_DIR" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_SYSTEM_NAME=iOS \
-    -DCMAKE_OSX_SYSROOT="$SYSROOT_SIM" \
-    -DCMAKE_OSX_ARCHITECTURES=arm64 \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
-    -DCMAKE_C_COMPILER="$(xcrun --sdk iphonesimulator -f clang)" \
-    -DCMAKE_CXX_COMPILER="$CLANGXX_SIM"
-cmake --build "$ARM64_SIM_DIR" --target min2phase
+DEVICE_LIB=$(find "$SRC/build-arm64-device" -name "libmin2phase.a" | head -1)
+SIM_LIB=$(find "$SRC/build-arm64-sim" -name "libmin2phase.a" | head -1)
 
-ARM64_SIM_LIB=$(find "$ARM64_SIM_DIR" -name "libmin2phase.a" | head -1)
-"$CLANGXX_SIM" -c \
-    -arch arm64 \
-    -isysroot "$SYSROOT_SIM" \
-    -mios-simulator-version-min=15.0 \
-    -std=c++14 \
-    -I"$SRC/include" \
-    -I"$WRAPPER/include" \
-    "$WRAPPER/src/min2phase_c.cpp" \
-    -o "$ARM64_SIM_DIR/min2phase_c.o"
-ar -q "$ARM64_SIM_LIB" "$ARM64_SIM_DIR/min2phase_c.o"
-ranlib "$ARM64_SIM_LIB"
-
-echo "Creating fat simulator library..."
-FAT_SIM_DIR="$SRC/build-sim-fat"
-mkdir -p "$FAT_SIM_DIR"
-lipo -create \
-    "$(find "$SRC/build-x86_64" -name "libmin2phase.a" | head -1)" \
-    "$ARM64_SIM_LIB" \
-    -output "$FAT_SIM_DIR/libmin2phase.a"
-
+# Single-arch arm64 simulator → xcodebuild names it "ios-arm64-simulator"
+# matching the libraryPath in build.gradle.kts iosSimulatorArm64 cinterop.
 echo "Creating XCFramework..."
 rm -rf "$OUT_DIR"
 mkdir -p "$OUT_DIR"
 xcodebuild -create-xcframework \
-    -library "$(find "$SRC/build-arm64" -name "libmin2phase.a" | head -1)" \
+    -library "$DEVICE_LIB" \
     -headers "$SRC/include" \
-    -library "$FAT_SIM_DIR/libmin2phase.a" \
+    -library "$SIM_LIB" \
     -headers "$SRC/include" \
     -output "$OUT_DIR/min2phase.xcframework"
 
 echo "Done: $OUT_DIR/min2phase.xcframework"
+echo "XCFramework contents:"
+ls "$OUT_DIR/min2phase.xcframework/"
