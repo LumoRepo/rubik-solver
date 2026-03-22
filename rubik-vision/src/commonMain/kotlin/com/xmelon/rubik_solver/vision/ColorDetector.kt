@@ -1,6 +1,7 @@
 package com.xmelon.rubik_solver.vision
 
 import com.xmelon.rubik_solver.model.CubeColor
+import kotlin.text.format
 
 private fun logd(@Suppress("UNUSED_PARAMETER") msg: () -> String) {
     // Debug logging removed for KMP commonMain — platform loggers available in AppViewModel
