@@ -1,0 +1,3 @@
+[submodule "rubik-solver/min2phaseCXX"]
+	path = rubik-solver/min2phaseCXX
+	url = https://github.com/lilborgo/min2phaseCXX

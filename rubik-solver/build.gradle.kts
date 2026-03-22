@@ -22,6 +22,7 @@ kotlin {
         compilations.getByName("main").cinterops.create("min2phase") {
             defFile(project.file("src/iosMain/cinterop/min2phase.def"))
             includeDirs(project.file("min2phaseCXX/include"))
+            includeDirs(project.file("min2phase_wrapper/include"))
             extraOpts("-libraryPath", libDir)
         }
     }
