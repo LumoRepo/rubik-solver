@@ -1,7 +1,6 @@
 package com.xmelon.rubik_solver.vision
 
 import com.xmelon.rubik_solver.model.CubeColor
-import kotlin.text.format
 
 private fun logd(@Suppress("UNUSED_PARAMETER") msg: () -> String) {
     // Debug logging removed for KMP commonMain — platform loggers available in AppViewModel
@@ -146,15 +145,14 @@ class ColorDetector {
     fun calibrationStr(): String =
         CubeColor.entries.joinToString(" ") { c ->
             val m = models[c]!!
-            format("%s[n=%.0f L=%.0f a=%.0f b=%.0f]", c.name, m.n, m.mean[0], m.mean[1], m.mean[2])
+            "${c.name}[n=${m.n.toInt()} L=${m.mean[0].toInt()} a=${m.mean[1].toInt()} b=${m.mean[2].toInt()}]"
         }
 
     /** Verbose model dump including effective variance and weighted-sample count. */
     fun modelDumpStr(): String =
         CubeColor.entries.joinToString(" ") { c ->
             val m = models[c]!!
-            format("${c.name}[L=%.1f a=%.1f b=%.1f v=%.0f n=%.0f]",
-                m.mean[0], m.mean[1], m.mean[2], m.variance, m.n)
+            "${c.name}[L=${m.mean[0]} a=${m.mean[1]} b=${m.mean[2]} v=${m.variance.toInt()} n=${m.n.toInt()}]"
         }
 
     /**
