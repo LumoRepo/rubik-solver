@@ -39,7 +39,8 @@ fun MainScreen(
     onBack: () -> Unit,
     onDone: () -> Unit
 ) {
-    var hasPerm by remember { mutableStateOf(checkCameraPermission()) }
+    val initialPerm = checkCameraPermission()
+    var hasPerm by remember { mutableStateOf(initialPerm) }
     val requestPermission = rememberCameraPermissionState { hasPerm = it }
     LaunchedEffect(Unit) { if (!hasPerm) requestPermission() }
 
