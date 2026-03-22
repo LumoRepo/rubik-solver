@@ -17,30 +17,30 @@
     <string name="home_status_loading">Loading…</string>
     <string name="home_status_ready">Ready</string>
     <!-- %s = error message from the exception -->
-    <string name="home_status_error">Setup failed: %s</string>
+    <string name="home_status_error">Setup failed: %1$s</string>
     <string name="home_button_scan">Scan Cube</string>
 
     <!-- ── Camera permission ─────────────────────────────────────────────── -->
     <string name="permission_camera_required">Camera permission is required to scan the cube.</string>
     <string name="permission_grant">Grant Permission</string>
     <!-- %s = system error message -->
-    <string name="camera_error">Camera error: %s</string>
+    <string name="camera_error">Camera error: %1$s</string>
     <string name="camera_retry">Retry</string>
 
     <!-- ── Scan screen ───────────────────────────────────────────────────── -->
     <string name="scan_initial_position">Initial Position</string>
     <string name="scan_initial_hint">Rotate to scan the center WHITE, with RED center on the bottom side</string>
     <!-- %s = rotation direction (e.g. "Up" or "Left") -->
-    <string name="scan_rotate_title">Rotate %s</string>
-    <!-- %s = face color name (e.g. "Red") -->
-    <string name="scan_rotate_hint">Rotate the cube to face %s</string>
-    <!-- %s = face color name (e.g. "Red") -->
-    <string name="scan_face_title">Scan %s</string>
-    <!-- %s = lowercase face color name (e.g. "red") -->
-    <string name="scan_face_hint">Rotate the cube to align the front center %s tile</string>
+    <string name="scan_rotate_title">Rotate %1$s</string>
+    <!-- %1$s = face color name (e.g. "Red") -->
+    <string name="scan_rotate_hint">Rotate the cube to face %1$s</string>
+    <!-- %1$s = face color name (e.g. "Red") -->
+    <string name="scan_face_title">Scan %1$s</string>
+    <!-- %1$s = lowercase face color name (e.g. "red") -->
+    <string name="scan_face_hint">Rotate the cube to align the front center %1$s tile</string>
     <string name="scan_face_edit_hint">Tap a tile to change its color if incorrect</string>
     <!-- %s = color name (e.g. "Orange") -->
-    <string name="scan_tile_color_warning">This tile color is not %s — please select the correct color</string>
+    <string name="scan_tile_color_warning">This tile color is not %1$s — please select the correct color</string>
     <!-- Rotation direction labels shown in the "Rotate …" title -->
     <string name="scan_direction_up">Up</string>
     <string name="scan_direction_left">Left</string>

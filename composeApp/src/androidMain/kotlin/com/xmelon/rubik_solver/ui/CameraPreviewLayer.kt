@@ -10,8 +10,10 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Text
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -101,22 +103,6 @@ actual fun CameraPreviewLayer(
             }
         }
 
-        Surface(
-            onClick    = onDebugToggle,
-            modifier   = Modifier.align(Alignment.TopEnd).padding(8.dp),
-            shape      = RoundedCornerShape(8.dp),
-            color      = if (debugMode) MaterialTheme.colorScheme.primary
-                         else MaterialTheme.colorScheme.surface.copy(alpha = 0.7f),
-            tonalElevation = 2.dp
-        ) {
-            Text(
-                "DBG",
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                style    = MaterialTheme.typography.labelSmall,
-                color    = if (debugMode) MaterialTheme.colorScheme.onPrimary
-                           else MaterialTheme.colorScheme.onSurface
-            )
-        }
     }
 }
 
