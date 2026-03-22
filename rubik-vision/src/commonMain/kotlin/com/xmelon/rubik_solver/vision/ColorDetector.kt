@@ -17,20 +17,25 @@ private fun logd(@Suppress("UNUSED_PARAMETER") msg: () -> String) {
  */
 class ColorDetector {
 
-    // ---- CIELAB priors for standard Rubik's cube pigments (D65 illuminant) ----
-    // WHITE:  L=92, a=-2,  b=6
-    // YELLOW: L=80, a=-5,  b=74
-    // RED:    L=39, a=63,  b=50
-    // ORANGE: L=55, a=52,  b=62
-    // BLUE:   L=26, a=18,  b=-55
-    // GREEN:  L=54, a=-54, b=37
+    // ---- CIELAB priors tuned to typical smartphone camera response ----
+    // Standard D65 pigment values are adjusted for the camera's color rendering,
+    // which compresses the a-axis (less chromatic) and shifts luminance.
+    // Key change: RED and ORANGE on camera are nearly identical in the a-channel
+    // (both ≈ a=49-50). Their main discriminators are L (RED darker ≈36, ORANGE
+    // lighter ≈44) and b (RED less yellow ≈38, ORANGE more yellow ≈50).
+    // WHITE:  L=85, a=-2,  b=5
+    // YELLOW: L=78, a=-4,  b=72
+    // RED:    L=36, a=50,  b=38
+    // ORANGE: L=44, a=49,  b=50
+    // BLUE:   L=26, a=16,  b=-50
+    // GREEN:  L=50, a=-42, b=32
     private val PRIORS: Map<CubeColor, FloatArray> = mapOf(
-        CubeColor.WHITE  to floatArrayOf(92f,  -2f,   6f),
-        CubeColor.YELLOW to floatArrayOf(80f,  -5f,  74f),
-        CubeColor.RED    to floatArrayOf(39f,  63f,  50f),
-        CubeColor.ORANGE to floatArrayOf(55f,  52f,  62f),
-        CubeColor.BLUE   to floatArrayOf(26f,  18f, -55f),
-        CubeColor.GREEN  to floatArrayOf(54f, -54f,  37f)
+        CubeColor.WHITE  to floatArrayOf(85f,  -2f,   5f),
+        CubeColor.YELLOW to floatArrayOf(78f,  -4f,  72f),
+        CubeColor.RED    to floatArrayOf(36f,  50f,  38f),
+        CubeColor.ORANGE to floatArrayOf(44f,  49f,  50f),
+        CubeColor.BLUE   to floatArrayOf(26f,  16f, -50f),
+        CubeColor.GREEN  to floatArrayOf(50f, -42f,  32f)
     )
 
     // Active models — one per color

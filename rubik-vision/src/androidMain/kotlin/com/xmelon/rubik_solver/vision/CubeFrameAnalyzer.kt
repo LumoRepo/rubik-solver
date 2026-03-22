@@ -31,12 +31,10 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
         private const val TEMPORAL_BUFFER_SIZE = 8
         private const val CENTER_STABLE_FRAMES = 10
         // NLL gate for center tile: is it plausibly the expected color?
-        // Replaces the old winner-takes-all confidence check.
-        // Prior NLL values: WHITE≈6.3, RED≈6.9, ORANGE≈7.8, others ≈5.7–7.5.
-        // A completely wrong tile scores 14–20+. Threshold 8.2 admits all expected
-        // colors including the hardest case (ORANGE, NLL≈7.8) while blocking
-        // a misaligned RED tile when scanning ORANGE (NLL≈8.1).
-        private const val CENTER_STABLE_MAX_NLL = 8.2f
+        // With camera-tuned priors, correct tiles score 5.8–7.0 (BLUE/GREEN highest).
+        // A completely wrong tile (e.g. GREEN in WHITE center) scores 15–35+.
+        // Threshold 7.5 admits all correct tiles with headroom and rejects misaligned ones.
+        private const val CENTER_STABLE_MAX_NLL = 7.5f
         private const val SCAN_FRAME_INTERVAL_MS = 1000L
     }
 

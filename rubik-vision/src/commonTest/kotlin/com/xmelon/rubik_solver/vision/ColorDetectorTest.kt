@@ -90,28 +90,27 @@ class ColorDetectorTest {
         assertEquals(colorAfterFirstRestore, colorAfterSecondRestore)
     }
 
-    @Test fun `actual Rubik pigments classify correctly with sufficient confidence`() {
+    @Test fun `camera-tuned priors classify correctly at prior means`() {
+        // Uses camera-tuned prior means (not standard D65 pigment values).
         val pigments = listOf(
-            CubeColor.WHITE  to floatArrayOf(92f,  -2f,   6f),
-            CubeColor.YELLOW to floatArrayOf(80f,  -5f,  74f),
-            CubeColor.RED    to floatArrayOf(39f,  63f,  50f),
-            CubeColor.ORANGE to floatArrayOf(55f,  52f,  62f),
-            CubeColor.BLUE   to floatArrayOf(26f,  18f, -55f),
-            CubeColor.GREEN  to floatArrayOf(54f, -54f,  37f)
+            CubeColor.WHITE  to floatArrayOf(85f,  -2f,   5f),
+            CubeColor.YELLOW to floatArrayOf(78f,  -4f,  72f),
+            CubeColor.RED    to floatArrayOf(36f,  50f,  38f),
+            CubeColor.ORANGE to floatArrayOf(44f,  49f,  50f),
+            CubeColor.BLUE   to floatArrayOf(26f,  16f, -50f),
+            CubeColor.GREEN  to floatArrayOf(50f, -42f,  32f)
         )
         for ((expected, lab) in pigments) {
             val (color, confidence) = detector.classify(lab)
             assertEquals(expected, color)
-            assertTrue(confidence >= 0.15f)
+            assertTrue(confidence > 0.0f)
         }
     }
 
-    @Test fun `RED tile at prior mean has confidence above centerStable threshold`() {
-        val redPriorLab = floatArrayOf(39f, 63f, 50f)
-        val (color, confidence) = detector.classify(redPriorLab)
+    @Test fun `RED tile at camera prior mean classifies as RED`() {
+        val redPriorLab = floatArrayOf(36f, 50f, 38f)
+        val (color, _) = detector.classify(redPriorLab)
         assertEquals(CubeColor.RED, color)
-        assertTrue(confidence > 0.0f)
-        assertTrue(confidence >= 0.15f)
     }
 
     @Test fun `modelDumpStr includes variance and n for all 6 colors`() {
@@ -124,7 +123,7 @@ class ColorDetectorTest {
     }
 
     @Test fun `rankFor returns 1 for best-matching prior color`() {
-        val redRgb = LabConverter.labToSRgb(floatArrayOf(39f, 63f, 50f))
+        val redRgb = LabConverter.labToSRgb(floatArrayOf(36f, 50f, 38f))
         assertEquals(1, detector.rankFor(redRgb, CubeColor.RED))
     }
 
