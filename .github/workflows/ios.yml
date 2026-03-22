@@ -37,29 +37,21 @@ jobs:
       - name: Compile Kotlin/Native (iosArm64 + iosSimulatorArm64)
         run: ./gradlew :composeApp:compileKotlinIosArm64 :composeApp:compileKotlinIosSimulatorArm64 :rubik-solver:compileKotlinIosArm64 :rubik-solver:compileKotlinIosSimulatorArm64
 
-      # Link + assemble ComposeApp.framework for the simulator target.
-      # This produces composeApp/build/xcode-frameworks/Debug/<sdk>/ComposeApp.framework
-      # and is passed to xcodebuild via FRAMEWORK_SEARCH_PATHS so the Swift
-      # compiler can find the module without relying on the DerivedData symlink.
-      - name: Assemble ComposeApp.framework (iosSimulatorArm64)
-        run: ./gradlew :composeApp:assembleDebugAppleFrameworkForXcodeIosSimulatorArm64
-
       # Build for iOS Simulator — no code signing required.
+      # KMP's Gradle script phase (inside xcodebuild) assembles ComposeApp.framework
+      # and creates a symlink at $BUILT_PRODUCTS_DIR/ComposeApp.framework so Swift
+      # can find the module via the default $(BUILT_PRODUCTS_DIR) framework search path.
+      # Using a local -derivedDataPath keeps $BUILT_PRODUCTS_DIR inside the repo tree
+      # so the relative symlink target resolves correctly.
       - name: Build iOS app (simulator)
         run: |
-          # Locate the pre-built framework directory (SDK name includes Xcode version).
-          FMWK_DIR=$(find "$(pwd)/composeApp/build/xcode-frameworks/Debug" \
-            -maxdepth 1 -name "iphonesimulator*" -type d 2>/dev/null | head -1)
-          echo "Framework search path: ${FMWK_DIR:-(not found)}"
-          ls "${FMWK_DIR}/" 2>/dev/null || true
-
           xcodebuild build \
             -project iosApp/iosApp.xcodeproj \
             -scheme iosApp \
             -sdk iphonesimulator \
             -arch arm64 \
             -configuration Debug \
-            FRAMEWORK_SEARCH_PATHS="${FMWK_DIR} \$(FRAMEWORK_SEARCH_PATHS)" \
+            -derivedDataPath ./build/xcode-derived-data \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
@@ -68,8 +60,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: iosApp-simulator
-          path: |
-            **/Debug-iphonesimulator/iosApp.app
+          path: build/xcode-derived-data/Build/Products/Debug-iphonesimulator/iosApp.app
           if-no-files-found: warn
 
       # ── Device IPA (optional) ──────────────────────────────────────────────
