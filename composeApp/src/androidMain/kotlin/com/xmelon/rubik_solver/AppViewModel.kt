@@ -159,12 +159,20 @@ class AppViewModel : ViewModel() {
             }
         else liveColors
         analyzer.colorDetector.saveCheckpoint()
-        analyzer.colorDetector.calibrateFace(liveRgbs, correctedColors)
-        // Extra weight-3 update for manually overridden tiles — these are high-confidence
-        // corrections that should pull the model more strongly than auto-classified tiles.
-        if (liveRgbs.size >= 9) {
+        // Only calibrate the center tile — it is 100% verified ground truth (color always
+        // known from the scan order). Non-center tiles have uncertain classifications and
+        // calibrating them contaminates models, especially RED/ORANGE which overlap on camera.
+        // weight=8 pushes n above MIN_SAMPLES so Welford variance kicks in and the model
+        // becomes a tight anchor around the actual camera LAB for this face's color.
+        val expectedCenter = CubeColor.expectedCenter(face)
+        if (liveWbRgbs.size >= 5) {
+            val centerLab = LabConverter.sRgbToLab(liveWbRgbs[4])
+            analyzer.colorDetector.calibrateTileLab(centerLab, expectedCenter, weight = 8f)
+        }
+        // Manually overridden tiles are also trustworthy — user has explicitly verified them.
+        if (liveWbRgbs.size >= 9) {
             colorOverrides.forEach { (ci, color) ->
-                if (ci < liveRgbs.size && ci != 4) analyzer.colorDetector.calibrateTile(liveRgbs[ci], color)
+                if (ci < liveWbRgbs.size && ci != 4) analyzer.colorDetector.calibrateTile(liveWbRgbs[ci], color)
             }
         }
         log("CONFIRM cal_after=${analyzer.colorDetector.calibrationStr()}")
