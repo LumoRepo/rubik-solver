@@ -130,11 +130,11 @@ private fun ColumnScope.ScanModeLayout(
     // deadlock where red/orange confusion prevented orange from ever aligning.
     val centerStable by analyzer.centerStable.collectAsState()
 
-    LaunchedEffect(centerStable, vm.isViewingScanned) {
+    LaunchedEffect(centerStable, vm.isViewingScanned, vm.colorOverrides.isNotEmpty()) {
         when {
             vm.isViewingScanned -> return@LaunchedEffect
-            centerStable && vm.isAwaitingAlignment  -> vm.isAwaitingAlignment = false
-            !centerStable && !vm.isAwaitingAlignment -> vm.isAwaitingAlignment = true
+            centerStable && vm.isAwaitingAlignment -> vm.isAwaitingAlignment = false
+            !centerStable && !vm.isAwaitingAlignment && vm.colorOverrides.isEmpty() -> vm.isAwaitingAlignment = true
         }
     }
 

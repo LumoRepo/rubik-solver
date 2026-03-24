@@ -15,7 +15,6 @@ import com.xmelon.rubik_solver.generated.resources.home_button_scan
 import com.xmelon.rubik_solver.generated.resources.home_status_error
 import com.xmelon.rubik_solver.generated.resources.home_status_loading
 import com.xmelon.rubik_solver.generated.resources.home_status_ready
-import com.xmelon.rubik_solver.generated.resources.home_subtitle
 import com.xmelon.rubik_solver.generated.resources.home_title
 import com.xmelon.rubik_solver.model.CubeColor
 import com.xmelon.rubik_solver.model.CubeState
@@ -38,7 +37,7 @@ fun HomeScreen(onScanClicked: () -> Unit) {
         }
     }
 
-    // Compute statusText in composable scope so stringResource (with format args) works on all platforms
+    // Status shown in header subtitle — same slot used by scan hint text on scan screen.
     val statusText = when {
         errorCause != null -> stringResource(Res.string.home_status_error, errorCause!!)
         solverReady        -> stringResource(Res.string.home_status_ready)
@@ -56,33 +55,38 @@ fun HomeScreen(onScanClicked: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Header: Standardized Bold Title + Muted Subtitle
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = stringResource(Res.string.home_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = stringResource(Res.string.home_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            // Header: mirrors ScanHeader structure (Row with column + icon-button-sized spacer)
+            // so the header height matches the scan screen exactly.
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(Res.string.home_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = statusText,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        minLines = 2
+                    )
+                }
+                // Spacer matching the 48dp IconButton in ScanHeader so header heights align.
+                Spacer(Modifier.size(48.dp))
             }
 
-            // Content: Standardized Card (Elevation 8dp, Rounded 24dp)
+            // Card: identical to scan screen card.
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(vertical = 24.dp),
+                    .padding(vertical = 16.dp),
                 shape = RoundedCornerShape(24.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     Box(modifier = Modifier.fillMaxSize().background(Color.Black))
 
-                    // Show only the center facelet of each face colored; rest blank (DarkGray).
                     val centersOnlyState = remember {
                         val faceColors = intArrayOf(
                             CubeColor.WHITE.ordinal, CubeColor.BLUE.ordinal, CubeColor.RED.ordinal,
@@ -94,25 +98,28 @@ fun HomeScreen(onScanClicked: () -> Unit) {
                         modifier = Modifier.fillMaxSize(),
                         cubeState = centersOnlyState,
                         dragEnabled = false,
-                        pitchOverride = 90f,
-                        yawOverride = 0f,
+                        pitchOverride = -90f,
+                        yawOverride = -270f,
                         highlightCenterFace = null
                     )
                 }
             }
 
-            // Footer: Standardized Action Area
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = statusText,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 12.dp).align(Alignment.CenterHorizontally)
-                )
+            // Footer: identical Row structure to the scan screen footer so the button aligns
+            // with the Scan button on the next screen. Side Spacers match the weight=1
+            // OutlinedButtons; the Scan Cube button occupies the same weight=2 center slot.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(Modifier.weight(1f))
                 Button(
                     onClick = onScanClicked,
                     enabled = solverReady,
-                    modifier = Modifier.height(56.dp).fillMaxWidth(),
+                    modifier = Modifier.height(56.dp).weight(2f),
                     shape = RoundedCornerShape(16.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
@@ -120,6 +127,7 @@ fun HomeScreen(onScanClicked: () -> Unit) {
                 ) {
                     Text(stringResource(Res.string.home_button_scan), style = MaterialTheme.typography.titleMedium)
                 }
+                Spacer(Modifier.weight(1f))
             }
         }
     }

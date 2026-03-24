@@ -119,8 +119,7 @@ class ColorDetector {
     fun colorCycle(wbRgb: Int, currentColor: CubeColor): CubeColor {
         val lab = LabConverter.sRgbToLab(wbRgb)
         val ranked = CubeColor.entries.sortedBy { models[it]!!.score(lab) }
-        val idx = ranked.indexOf(currentColor)
-        return ranked[(idx + 1) % ranked.size]
+        return if (currentColor == ranked[0]) ranked[1] else ranked[0]
     }
 
     /** Saves a deep copy of the current model state (for undo). */

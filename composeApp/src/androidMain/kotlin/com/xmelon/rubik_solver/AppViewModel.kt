@@ -222,11 +222,17 @@ class AppViewModel : ViewModel() {
     fun restartScan() {
         orchestrator.reset()
         analyzer.colorDetector.resetCalibration()
+        analyzer.resetTemporalBuffers()
+        analyzer.expectedCenterColor = CubeColor.expectedCenter(orchestrator.currentFaceToScan.value)
         colorPalette.clear()
         solveResult = null
         currentStep = 0
         appMode = AppMode.SCAN
-        resetProgress()
+        val firstFace = orchestrator.currentFaceToScan.value
+        scanningFace = firstFace
+        updateScanProgress(firstFace)
+        solvingStep = 0
+        solvingTotalSteps = 0
     }
 
     fun resetProgress() {

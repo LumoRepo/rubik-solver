@@ -70,6 +70,8 @@ app/build/
 */build/kotlin/
 
 # Firebase credentials (security!)
+app/google-services.json
+composeApp/google-services.json
 app/xmelon-rubik-solver-firebase-admin.json
 composeApp/xmelon-rubik-solver-firebase-admin.json
 */firebase-admin.json
