@@ -15,7 +15,10 @@ private fun log(msg: String) { println("[RubikSolver] $msg") }
 class ScanOrchestrator {
 
     companion object {
-        val SCAN_ORDER: List<Face> = listOf(Face.U, Face.F, Face.R, Face.B, Face.L, Face.D)
+        // D→L→B→R→F→U: each consecutive pair is a single-axis rotation.
+        // D and U are at the endpoints (they can only connect via pitch at a fixed yaw).
+        // This order also makes the final U→Solve transition a single pitch.
+        val SCAN_ORDER: List<Face> = listOf(Face.D, Face.L, Face.B, Face.R, Face.F, Face.U)
     }
     
     // @Volatile: ensures writes from one thread are immediately visible to reads on others.

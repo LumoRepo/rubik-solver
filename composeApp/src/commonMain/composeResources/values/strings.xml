@@ -15,7 +15,7 @@
     <string name="home_title">Rubik's Solver</string>
     <string name="home_subtitle">Scan &amp; solve the standard 3×3 Rubik's cube. Have the cube oriented as shown below</string>
     <string name="home_status_loading">Loading…</string>
-    <string name="home_status_ready">Ready</string>
+    <string name="home_status_ready">Position the yellow face as shown, then tap Scan</string>
     <!-- %s = error message from the exception -->
     <string name="home_status_error">Setup failed: %1$s</string>
     <string name="home_button_scan">Scan Cube</string>

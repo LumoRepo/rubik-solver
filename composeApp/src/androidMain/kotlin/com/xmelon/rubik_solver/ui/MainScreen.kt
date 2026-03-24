@@ -22,6 +22,7 @@ import com.xmelon.rubik_solver.platformLog
 import com.xmelon.rubik_solver.rememberCameraPermissionState
 import com.xmelon.rubik_solver.solver.SolveResult
 import com.xmelon.rubik_solver.vision.LabConverter
+import com.xmelon.rubik_solver.vision.ScanOrchestrator
 import kotlinx.coroutines.*
 import com.xmelon.rubik_solver.generated.resources.Res
 import com.xmelon.rubik_solver.generated.resources.permission_camera_required
@@ -252,7 +253,7 @@ private fun ColumnScope.ScanModeLayout(
             faceScanned = isFaceScanned(facelets, currentFace),
             effectiveLiveColorsSize = effectiveLiveColors.size,
             onBack = {
-                if (currentFace == Face.U) {
+                if (currentFace == ScanOrchestrator.SCAN_ORDER.first()) {
                     vm.resetColorCalibration()
                     onBack()
                 } else {
@@ -355,8 +356,9 @@ private class CubeRotationState(val pitch: Animatable<Float, *>, val yaw: Animat
 
 @Composable
 private fun rememberCubeRotation(vm: AppViewModel, currentFace: Face): CubeRotationState {
-    val pitch = remember { Animatable(faceTargetRotX(Face.U)) }
-    val yaw = remember { Animatable(faceTargetRotY(Face.U)) }
+    val firstFace = ScanOrchestrator.SCAN_ORDER.first()
+    val pitch = remember { Animatable(faceTargetRotX(firstFace)) }
+    val yaw = remember { Animatable(faceTargetRotY(firstFace)) }
 
     val rotTargetX = if (vm.appMode == AppMode.SOLVE) 0f else faceTargetRotX(currentFace)
     val rotTargetY = if (vm.appMode == AppMode.SOLVE) 0f else faceTargetRotY(currentFace)

@@ -208,10 +208,11 @@ class AppViewModel : ViewModel() {
 
     fun goPrevStep() {
         if (currentStep == 0) {
-            log("GO_BACK_TO_SCAN → Face.D")
+            val lastFace = ScanOrchestrator.SCAN_ORDER.last()
+            log("GO_BACK_TO_SCAN → $lastFace")
             appMode = AppMode.SCAN
-            orchestrator.jumpToFace(Face.D)
-            resetFaceUiState(Face.D)
+            orchestrator.jumpToFace(lastFace)
+            resetFaceUiState(lastFace)
             return
         }
         animIsReverse = true
