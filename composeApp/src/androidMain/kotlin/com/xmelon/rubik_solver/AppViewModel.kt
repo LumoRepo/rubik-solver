@@ -112,18 +112,25 @@ class AppViewModel : ViewModel() {
 
     private fun runSolver() {
         viewModelScope.launch {
-            val state = orchestrator.buildCubeState()
-            log("SOLVER_START cube=${state.facelets.toCubeStr()}")
-            isLoadingSolve = true
-            val result = withContext(Dispatchers.Default) { CubeSolver.solve(state) }
-            log("SOLVER_DONE result=${result::class.simpleName}")
-            solveResult = result
-            currentStep = 0
-            animIsReverse = false
-            isLoadingSolve = false
-            appMode = AppMode.SOLVE
-            progressPhase = ProgressPhase.SOLVING
-            updateSolveProgress(0)
+            try {
+                val state = orchestrator.buildCubeState()
+                log("SOLVER_START cube=${state.facelets.toCubeStr()}")
+                isLoadingSolve = true
+                val result = withContext(Dispatchers.Default) { CubeSolver.solve(state) }
+                log("SOLVER_DONE result=${result::class.simpleName}")
+                solveResult = result
+                currentStep = 0
+                animIsReverse = false
+                isLoadingSolve = false
+                appMode = AppMode.SOLVE
+                progressPhase = ProgressPhase.SOLVING
+                updateSolveProgress(0)
+            } catch (e: Exception) {
+                log("SOLVER_ERROR ${e.message}")
+                solveResult = SolveResult.Error(e.message ?: "Unexpected error")
+                isLoadingSolve = false
+                appMode = AppMode.SOLVE
+            }
         }
     }
 

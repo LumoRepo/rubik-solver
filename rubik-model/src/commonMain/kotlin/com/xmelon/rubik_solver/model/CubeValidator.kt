@@ -32,9 +32,13 @@ object CubeValidator {
         }
 
         // 2. Check centers — all 6 must be distinct colors.
-        val centers = mutableSetOf<Int>()
-        for (face in Face.entries) centers.add(f[face.offset + 4])
-        if (centers.size != 6) {
+        val seenCenters = BooleanArray(CubeColor.entries.size)
+        var distinctCenters = 0
+        for (face in Face.entries) {
+            val center = f[face.offset + 4]
+            if (!seenCenters[center]) { seenCenters[center] = true; distinctCenters++ }
+        }
+        if (distinctCenters != 6) {
             return ValidationResult.Invalid("Cube centers must be 6 distinct colors")
         }
 

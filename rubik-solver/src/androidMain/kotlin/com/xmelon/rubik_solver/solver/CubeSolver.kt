@@ -51,7 +51,7 @@ actual object CubeSolver {
                         SolveResult.Success(moves, moves.size)
                     }
                 } catch (e: Exception) {
-                    SolveResult.Error("Error exception")
+                    SolveResult.Error(e.message ?: "Unexpected solver error")
                 }
             } ?: SolveResult.Error("Error timeout")
         }
@@ -66,23 +66,13 @@ actual object CubeSolver {
         val parts = CubeColor.entries
             .filter { counts[it.ordinal] != 9 }
             .joinToString(", ") { c ->
-                val face = colorFace[c]?.let { " ($it)" } ?: ""
-                "${c.name.lowercase().replaceFirstChar { it.uppercase() }}$face: ${counts[c.ordinal]}/9"
+                val faceName = colorFace[c]?.let { " ($it)" } ?: ""
+                "${c.name.lowercase().replaceFirstChar { it.uppercase() }}$faceName: ${counts[c.ordinal]}/9"
             }
-        return SolveResult.Error("Error 1")
+        return if (parts.isEmpty()) SolveResult.Error("Wrong facelet arrangement (Error 1)")
+        else SolveResult.Error("Wrong facelet counts: $parts")
     }
 
-    private fun parseError(errorResponse: String): SolveResult.Error {
-        val code = when (errorResponse.trim()) {
-            "Error 2" -> "Error 2"
-            "Error 3" -> "Error 3"
-            "Error 4" -> "Error 4"
-            "Error 5" -> "Error 5"
-            "Error 6" -> "Error 6"
-            "Error 7" -> "Error 7"
-            "Error 8" -> "Error 8"
-            else -> errorResponse.trim()
-        }
-        return SolveResult.Error(code)
-    }
+    private fun parseError(errorResponse: String): SolveResult.Error =
+        SolveResult.Error(errorResponse.trim())
 }

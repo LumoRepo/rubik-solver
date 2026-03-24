@@ -36,6 +36,13 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
         // Threshold 7.5 admits all correct tiles with headroom and rejects misaligned ones.
         private const val CENTER_STABLE_MAX_NLL = 7.5f
         private const val SCAN_FRAME_INTERVAL_MS = 1000L
+        // Pixels with R+G+B <= this are near-black (lens dirt / border) and excluded from
+        // tile LAB extraction and debug bitmap rendering.
+        private const val DARK_PIXEL_THRESHOLD = 30
+        // Fraction of cell size used as inset on each edge of a tile sampling region.
+        // 15% avoids the cell border where sticker edges and surface curvature cause
+        // colour blending with adjacent tiles or the cube frame.
+        private const val TILE_INSET_FRACTION = 0.15f
     }
 
     /** Per-session color detector. Owned here so each scan session gets isolated state. */
@@ -55,14 +62,11 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
     private val _detectedColors = MutableStateFlow<List<CubeColor>>(emptyList())
     val detectedColors = _detectedColors.asStateFlow()
 
-    // In this pipeline, detectedRgbs and detectedWbRgbs carry the same LAB-derived sRGB values.
-    // detectedRgbs is preserved for interface compatibility with AppViewModel.
-    private val _detectedRgbs = MutableStateFlow<IntArray>(IntArray(0))
-    val detectedRgbs = _detectedRgbs.asStateFlow()
-
-    /** LAB-derived sRGB per tile — same semantics as previous detectedWbRgbs. */
+    /** LAB-derived sRGB per tile. */
     private val _detectedWbRgbs = MutableStateFlow<IntArray>(IntArray(0))
     val detectedWbRgbs = _detectedWbRgbs.asStateFlow()
+    /** Alias for [detectedWbRgbs] — kept for call-site compatibility. */
+    val detectedRgbs get() = detectedWbRgbs
 
     /** Per-tile confidence in [0,1]. < 0.15 = uncertain. */
     private val _confidence = MutableStateFlow<FloatArray>(FloatArray(0))
@@ -143,13 +147,11 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
                 bitmap
             }
             try {
-                val (colors, rgbs) = extractGridColors(rotatedBitmap)
+                val colors = extractGridColors(rotatedBitmap)
                 _detectedColors.value = colors
-                _detectedRgbs.value = rgbs
             } catch (e: Exception) {
                 Log.e(TAG, "extractGridColors() failed", e)
                 _detectedColors.value = emptyList()
-                _detectedRgbs.value = IntArray(0)
                 _detectedWbRgbs.value = IntArray(0)
                 _confidence.value = FloatArray(0)
             } finally {
@@ -174,14 +176,14 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
         }
     }
 
-    private fun extractGridColors(bitmap: Bitmap): Pair<List<CubeColor>, IntArray> {
+    private fun extractGridColors(bitmap: Bitmap): List<CubeColor> {
         val region = visibleRegion(bitmap.width, bitmap.height)
         val rx = region[0]; val ry = region[1]; val rw = region[2]; val rh = region[3]
         val boxSize = (minOf(rw, rh) * 0.66f).toInt()
         val startX = rx + (rw - boxSize) / 2
         val startY = ry + (rh - boxSize) / 2
         val cellSize = boxSize / 3
-        val inset = (cellSize * 0.15f).toInt().coerceAtLeast(2)
+        val inset = (cellSize * TILE_INSET_FRACTION).toInt().coerceAtLeast(2)
 
         // 1. Extract raw LAB per tile (write into pre-allocated rawLab entries)
         for (row in 0..2) {
@@ -221,10 +223,12 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
         val centerMatch = expected != null
                 && colorDetector.scoreFor(expected, smoothedLab[4]) < CENTER_STABLE_MAX_NLL
         val newCount = if (centerMatch)
-            minOf(consecutiveCenterInRange.get() + 1, CENTER_STABLE_FRAMES)
-        else 0
-        consecutiveCenterInRange.set(newCount)
-        val nowStable = consecutiveCenterInRange.get() >= CENTER_STABLE_FRAMES
+            consecutiveCenterInRange.updateAndGet { minOf(it + 1, CENTER_STABLE_FRAMES) }
+        else {
+            consecutiveCenterInRange.set(0)
+            0
+        }
+        val nowStable = newCount >= CENTER_STABLE_FRAMES
         if (nowStable != _centerStable.value) _centerStable.value = nowStable
 
         // 5. Emit StateFlows
@@ -285,7 +289,7 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
                 frameColors, frameConfidences, smoothedLab)
         else null
 
-        return frameColors to frameRgbs
+        return frameColors.toList()
     }
 
     /**
@@ -311,7 +315,7 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
                 val r = (p shr 16) and 0xFF
                 val g = (p shr 8)  and 0xFF
                 val b =  p         and 0xFF
-                if (r + g + b > 30) {
+                if (r + g + b > DARK_PIXEL_THRESHOLD) {
                     val lab = LabConverter.sRgbToLab(p)
                     tileSumBuf[0] += lab[0]; tileSumBuf[1] += lab[1]; tileSumBuf[2] += lab[2]
                     count++
@@ -369,7 +373,7 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
                         val r = (p shr 16) and 0xFF
                         val g = (p shr 8)  and 0xFF
                         val b =  p         and 0xFF
-                        if (r + g + b > 30) {
+                        if (r + g + b > DARK_PIXEL_THRESHOLD) {
                             outPixels[py * boxSize + px] = (0xFF shl 24) or (p and 0x00FFFFFF)
                         }
                     }

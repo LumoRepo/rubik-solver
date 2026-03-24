@@ -54,14 +54,16 @@ class ColorDetectorTest {
         assertTrue(blueScore < greenScore)
     }
 
-    @Test fun `colorCycle advances through all 6 colors without repeating`() {
-        val seen = mutableSetOf<CubeColor>()
-        var cur = detector.classify(LabConverter.sRgbToLab(stdRed)).first
-        repeat(6) {
-            seen.add(cur)
-            cur = detector.colorCycle(stdRed, cur)
-        }
-        assertEquals(6, seen.size)
+    @Test fun `colorCycle toggles between top 2 NLL colors`() {
+        // colorCycle returns ranked[1] when current == ranked[0], and ranked[0] otherwise.
+        val lab = LabConverter.sRgbToLab(stdRed)
+        val ranked = CubeColor.entries.sortedBy { detector.scoreFor(it, lab) }
+        val top1 = ranked[0]
+        val top2 = ranked[1]
+        assertEquals(top2, detector.colorCycle(stdRed, top1))
+        assertEquals(top1, detector.colorCycle(stdRed, top2))
+        // Any other color also maps back to top1
+        assertEquals(top1, detector.colorCycle(stdRed, ranked[2]))
     }
 
     @Test fun `saveCheckpoint and restoreCheckpoint rolls back model state`() {

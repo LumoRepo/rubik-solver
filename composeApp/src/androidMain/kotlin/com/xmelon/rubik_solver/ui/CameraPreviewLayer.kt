@@ -130,7 +130,7 @@ private fun setupCamera(
             provider.unbindAll()
             provider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA, preview, analysis)
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("CameraPreviewLayer", "Camera setup failed", e)
             onError("Camera error: ${e.message ?: e::class.simpleName ?: ""}")
         }
     }, ContextCompat.getMainExecutor(context))

@@ -30,6 +30,7 @@ enum class Face(val index: Int) {
         /** Face count. */
         const val COUNT = 6
 
-        fun fromIndex(i: Int): Face = entries[i]
+        fun fromIndex(i: Int): Face = entries.getOrNull(i)
+            ?: error("Face index out of range: $i (valid 0..${entries.size - 1})")
     }
 }

@@ -2,10 +2,6 @@ package com.xmelon.rubik_solver.vision
 
 import com.xmelon.rubik_solver.model.CubeColor
 
-private fun logd(@Suppress("UNUSED_PARAMETER") msg: () -> String) {
-    // Debug logging removed for KMP commonMain — platform loggers available in AppViewModel
-}
-
 /**
  * Color classifier for Rubik's Cube facelets using CIELAB + Bayesian Gaussian models.
  *
@@ -59,11 +55,11 @@ class ColorDetector {
      *         confidence = clamp(margin / scoreMax, 0f, 1f)
      */
     fun classify(lab: FloatArray): Pair<CubeColor, Float> {
-        val sorted = CubeColor.entries.sortedBy { models[it]!!.score(lab) }
+        val sorted = CubeColor.entries.sortedBy { model(it).score(lab) }
         val best   = sorted[0]
         val second = sorted[1]
-        val s1 = models[best]!!.score(lab)
-        val s2 = models[second]!!.score(lab)
+        val s1 = model(best).score(lab)
+        val s2 = model(second).score(lab)
         val margin = s2 - s1
         // Normalize margin by the larger score magnitude so confidence stays in [0,1]
         // even when ln(variance) is negative (converged models).
@@ -86,9 +82,9 @@ class ColorDetector {
         if (tileRgbs.size != 9 || confirmedColors.size != 9) return
         for (i in 0..8) {
             val lab = LabConverter.sRgbToLab(tileRgbs[i])
-            models[confirmedColors[i]]!!.update(lab, weight = 1f)
+            requireNotNull(models[confirmedColors[i]]) { "No model for ${confirmedColors[i]}" }
+                .update(lab, weight = 1f)
         }
-        logd { "CAL calibrateFace ${calibrationStr()}" }
     }
 
     /**
@@ -99,8 +95,8 @@ class ColorDetector {
      */
     fun calibrateTile(tileRgb: Int, correctedColor: CubeColor) {
         val lab = LabConverter.sRgbToLab(tileRgb)
-        models[correctedColor]!!.update(lab, weight = 3f)
-        logd { "CAL calibrateTile $correctedColor ${calibrationStr()}" }
+        requireNotNull(models[correctedColor]) { "No model for $correctedColor" }
+            .update(lab, weight = 3f)
     }
 
     /**
@@ -108,7 +104,7 @@ class ColorDetector {
      * Used by the center-tile seed path which already works in LAB space.
      */
     fun calibrateTileLab(lab: FloatArray, color: CubeColor, weight: Float = 1f) {
-        models[color]!!.update(lab, weight)
+        requireNotNull(models[color]) { "No model for $color" }.update(lab, weight)
     }
 
     /**
@@ -118,15 +114,16 @@ class ColorDetector {
      */
     fun colorCycle(wbRgb: Int, currentColor: CubeColor): CubeColor {
         val lab = LabConverter.sRgbToLab(wbRgb)
-        val ranked = CubeColor.entries.sortedBy { models[it]!!.score(lab) }
+        val ranked = CubeColor.entries.sortedBy { model(it).score(lab) }
         return if (currentColor == ranked[0]) ranked[1] else ranked[0]
     }
 
-    /** Saves a deep copy of the current model state (for undo). */
+    /** Saves a deep copy of the current model state (for undo).
+     *  History is capped at 6 entries — one per face scan — so the oldest is
+     *  silently dropped when the cap is reached. */
     fun saveCheckpoint() {
         if (history.size >= 6) history.removeAt(0)
         history.addLast(models.mapValues { it.value.copy() })
-        logd { "CAL saveCheckpoint [${history.size}] ${calibrationStr()}" }
     }
 
     /** Restores the most recently saved model state, or resets to priors if the stack is empty. */
@@ -136,9 +133,7 @@ class ColorDetector {
             for ((color, model) in snapshot) {
                 models[color] = model.copy()
             }
-            logd { "CAL restoreCheckpoint [${history.size}] MODEL_DUMP ${modelDumpStr()}" }
         } else {
-            logd { "CAL restoreCheckpoint EMPTY → resetCalibration" }
             resetCalibration()
         }
     }
@@ -150,20 +145,19 @@ class ColorDetector {
             models[color] = model
         }
         history.clear()
-        logd { "CAL resetCalibration MODEL_DUMP ${modelDumpStr()}" }
     }
 
     /** Returns a human-readable calibration summary for debug logging. */
     fun calibrationStr(): String =
         CubeColor.entries.joinToString(" ") { c ->
-            val m = models[c]!!
+            val m = model(c)
             "${c.name}[n=${m.n.toInt()} L=${m.mean[0].toInt()} a=${m.mean[1].toInt()} b=${m.mean[2].toInt()}]"
         }
 
     /** Verbose model dump including effective variance and weighted-sample count. */
     fun modelDumpStr(): String =
         CubeColor.entries.joinToString(" ") { c ->
-            val m = models[c]!!
+            val m = model(c)
             "${c.name}[L=${m.mean[0]} a=${m.mean[1]} b=${m.mean[2]} v=${m.variance.toInt()} n=${m.n.toInt()}]"
         }
 
@@ -174,25 +168,28 @@ class ColorDetector {
      */
     fun rankFor(wbRgb: Int, color: CubeColor): Int {
         val lab = LabConverter.sRgbToLab(wbRgb)
-        val sorted = CubeColor.entries.sortedBy { models[it]!!.score(lab) }
+        val sorted = CubeColor.entries.sortedBy { model(it).score(lab) }
         return sorted.indexOf(color) + 1
     }
 
     /** 1-based NLL rank of [color] for an already-computed [lab] vector. */
     fun rankForLab(lab: FloatArray, color: CubeColor): Int {
-        val sorted = CubeColor.entries.sortedBy { models[it]!!.score(lab) }
+        val sorted = CubeColor.entries.sortedBy { model(it).score(lab) }
         return sorted.indexOf(color) + 1
     }
 
     /** NLL score for [color] at [lab]. Lower = better match. */
-    fun scoreFor(color: CubeColor, lab: FloatArray): Float = models[color]!!.score(lab)
+    fun scoreFor(color: CubeColor, lab: FloatArray): Float = model(color).score(lab)
 
     // =====================================================================
     //  Private helpers
     // =====================================================================
 
+    private fun model(color: CubeColor): ColorModel =
+        requireNotNull(models[color]) { "No model for $color" }
+
     private fun buildPriorModels(): MutableMap<CubeColor, ColorModel> =
         CubeColor.entries.associateTo(mutableMapOf()) { color ->
-            color to ColorModel(mean = PRIORS[color]!!.copyOf())
+            color to ColorModel(mean = requireNotNull(PRIORS[color]) { "No prior for $color" }.copyOf())
         }
 }
