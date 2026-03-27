@@ -28,6 +28,11 @@ jobs:
       - name: Run unit tests
         run: ./gradlew :rubik-model:jvmTest :rubik-vision:testDebugUnitTest
 
+      - name: Write google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: echo "$GOOGLE_SERVICES_JSON" > composeApp/google-services.json
+
       - name: Install consistent debug keystore
         env:
           DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
