@@ -21,10 +21,15 @@ class ColorModel(
     companion object {
         const val DEFAULT_PRIOR_VARIANCE = 300f   // = ~17²; calibrated for standard Rubik's pigment separation
         const val MIN_SAMPLES = 5f                // Welford variance used only after this many samples
-        // Floor variance after calibration. Tiles of the same color vary ~5 LAB units
-        // per channel; √30 ≈ 5.5 keeps the model from collapsing to a single point and
-        // ensures two calibrated models compete on distance rather than variance ratio.
-        const val MIN_CALIBRATED_VARIANCE = 30f
+        // Floor variance after calibration. Must be HIGH enough that a single miscalibrated
+        // center tile (e.g. orange center appearing dark/unusual on camera) doesn't create a
+        // hyper-tight model that penalises all tiles far from it. With MIN_CALIBRATED_VARIANCE=30,
+        // a miscalibrated ORANGE at (44,38,56) gets score=22 for a tile at (65,49,53), while
+        // uncalibrated RED prior gets score=8.9 — RED wins despite being further away.
+        // At 200: ORANGE scores 8.2 (< RED's 8.9) so ORANGE correctly wins.
+        // ln(200)=5.30 is close enough to ln(300)=5.70 that calibrated/uncalibrated models
+        // compete on actual distance, not on the ln(variance) constant.
+        const val MIN_CALIBRATED_VARIANCE = 200f
     }
 
     /** Effective variance: Welford estimate once we have enough data, prior otherwise. */

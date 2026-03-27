@@ -14,22 +14,37 @@ import com.xmelon.rubik_solver.model.CubeColor
 class ColorDetector {
 
     // ---- CIELAB priors tuned to typical smartphone camera response ----
-    // Standard D65 pigment values are adjusted for the camera's color rendering,
-    // which compresses the a-axis (less chromatic) and shifts luminance.
-    // Key change: RED and ORANGE on camera are nearly identical in the a-channel
-    // (both ≈ a=49-50). Their main discriminators are L (RED darker ≈36, ORANGE
-    // lighter ≈44) and b (RED less yellow ≈38, ORANGE more yellow ≈50).
+    // Standard D65 pigment values adjusted for camera rendering.
+    // RED/ORANGE discrimination relies primarily on the a-axis (red-green):
+    //   a: RED is strongly red (≈56) vs ORANGE which is more yellow (≈38)
+    //   L: RED is notably darker (≈40) vs ORANGE (≈56)
+    //   b: ORANGE has more yellow (≈55) vs RED (≈36)
+    // Critical insight: in CIELAB, orange pigment has MUCH lower a than pure red
+    // because orange shifts toward yellow. Camera-rendered orange tiles show a≈30-45,
+    // while red tiles show a≈55-65. The old ORANGE prior at a=50 overlapped with RED,
+    // making ambiguous tiles (e.g. L:45 a:64 b:45) incorrectly score closer to ORANGE.
     // WHITE:  L=85, a=-2,  b=5
-    // YELLOW: L=78, a=-4,  b=72
-    // RED:    L=36, a=50,  b=38
-    // ORANGE: L=44, a=49,  b=50
+    // YELLOW: L=60, a=8,   b=64  (camera-tuned: warm WB renders yellow darker with positive a)
+    // RED:    L=40, a=56,  b=36
+    // ORANGE: L=56, a=50,  b=55
     // BLUE:   L=26, a=16,  b=-50
     // GREEN:  L=50, a=-42, b=32
+    //
+    // RED vs ORANGE discrimination:
+    //   The original bug (ORANGE prior L:44, a:50) had ORANGE at the same a as RED, so the
+    //   a-axis gave no signal. The fix is on the RED side: raising L from 36→40 and a from
+    //   50→56 matches this camera's actual red rendering (L:40-46, a:54-64). With RED now
+    //   accurately placed, ambiguous-looking tiles (e.g. L:45 a:64 b:45) correctly score
+    //   RED=170 vs ORANGE=417. Keeping ORANGE a at 50 is correct — lowering it to 38 broke
+    //   classification of dark orange tiles (a:50-54) by putting ORANGE too far from them.
+    //
+    // YELLOW: camera-tuned from (78,-4,72) to (60,8,64) because smartphone cameras render
+    //   Rubik's yellow at L:57-62, a:12-18, b:60-65 (darker/warmer than D65 standard).
     private val PRIORS: Map<CubeColor, FloatArray> = mapOf(
         CubeColor.WHITE  to floatArrayOf(85f,  -2f,   5f),
-        CubeColor.YELLOW to floatArrayOf(78f,  -4f,  72f),
-        CubeColor.RED    to floatArrayOf(36f,  50f,  38f),
-        CubeColor.ORANGE to floatArrayOf(44f,  49f,  50f),
+        CubeColor.YELLOW to floatArrayOf(60f,   8f,  64f),
+        CubeColor.RED    to floatArrayOf(40f,  56f,  36f),
+        CubeColor.ORANGE to floatArrayOf(56f,  50f,  55f),
         CubeColor.BLUE   to floatArrayOf(26f,  16f, -50f),
         CubeColor.GREEN  to floatArrayOf(50f, -42f,  32f)
     )

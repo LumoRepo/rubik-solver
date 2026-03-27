@@ -96,9 +96,9 @@ class ColorDetectorTest {
         // Uses camera-tuned prior means (not standard D65 pigment values).
         val pigments = listOf(
             CubeColor.WHITE  to floatArrayOf(85f,  -2f,   5f),
-            CubeColor.YELLOW to floatArrayOf(78f,  -4f,  72f),
-            CubeColor.RED    to floatArrayOf(36f,  50f,  38f),
-            CubeColor.ORANGE to floatArrayOf(44f,  49f,  50f),
+            CubeColor.YELLOW to floatArrayOf(60f,   8f,  64f),
+            CubeColor.RED    to floatArrayOf(40f,  56f,  36f),
+            CubeColor.ORANGE to floatArrayOf(56f,  50f,  55f),
             CubeColor.BLUE   to floatArrayOf(26f,  16f, -50f),
             CubeColor.GREEN  to floatArrayOf(50f, -42f,  32f)
         )
@@ -110,7 +110,7 @@ class ColorDetectorTest {
     }
 
     @Test fun `RED tile at camera prior mean classifies as RED`() {
-        val redPriorLab = floatArrayOf(36f, 50f, 38f)
+        val redPriorLab = floatArrayOf(40f, 56f, 36f)
         val (color, _) = detector.classify(redPriorLab)
         assertEquals(CubeColor.RED, color)
     }

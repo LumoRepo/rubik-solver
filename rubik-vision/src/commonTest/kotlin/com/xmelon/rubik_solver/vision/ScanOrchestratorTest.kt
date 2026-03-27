@@ -19,19 +19,19 @@ class ScanOrchestratorTest {
 
     @Test
     fun `moveToPreviousFace returns false when already at first face`() {
-        assertEquals(Face.U, orchestrator.currentFaceToScan.value)
+        assertEquals(Face.D, orchestrator.currentFaceToScan.value)
         val moved = orchestrator.moveToPreviousFace()
         assertFalse(moved)
-        assertEquals(Face.U, orchestrator.currentFaceToScan.value)
+        assertEquals(Face.D, orchestrator.currentFaceToScan.value)
     }
 
     @Test
     fun `moveToPreviousFace returns true and moves back when not at first face`() {
         orchestrator.moveToNextFace()
-        assertEquals(Face.F, orchestrator.currentFaceToScan.value)
+        assertEquals(Face.L, orchestrator.currentFaceToScan.value)
         val moved = orchestrator.moveToPreviousFace()
         assertTrue(moved)
-        assertEquals(Face.U, orchestrator.currentFaceToScan.value)
+        assertEquals(Face.D, orchestrator.currentFaceToScan.value)
     }
 
     @Test
@@ -45,7 +45,7 @@ class ScanOrchestratorTest {
 
     @Test
     fun `D-face orientation transform applied correctly in commitCurrentFace`() {
-        repeat(5) { orchestrator.moveToNextFace() }
+        // D is first in SCAN_ORDER [D,L,B,R,F,U], no navigation needed
         assertEquals(Face.D, orchestrator.currentFaceToScan.value)
 
         val colors = listOf(

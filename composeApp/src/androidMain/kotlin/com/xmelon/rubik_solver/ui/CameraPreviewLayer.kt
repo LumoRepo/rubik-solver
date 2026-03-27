@@ -7,7 +7,6 @@ import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
@@ -17,11 +16,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -51,7 +47,6 @@ actual fun CameraPreviewLayer(
     DisposableEffect(Unit) { onDispose { cameraExecutor.shutdown() } }
     var cameraError    by remember { mutableStateOf<String?>(null) }
     var cameraRetryKey by remember { mutableIntStateOf(0) }
-    val debugBitmap    by cubeAnalyzer.debugBitmap.collectAsState()
 
     Box(modifier) {
         key(cameraRetryKey) {
@@ -84,22 +79,6 @@ actual fun CameraPreviewLayer(
                     onClick = { cameraError = null; cameraRetryKey++ },
                     colors  = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onError)
                 ) { Text(stringResource(Res.string.camera_retry)) }
-            }
-        }
-
-        if (debugMode) {
-            debugBitmap?.let { bmp ->
-                val imgBitmap = bmp.asImageBitmap()
-                Canvas(Modifier.fillMaxSize()) {
-                    // Draw the debug grid centred, occupying the same 66% square
-                    // region as the tile extraction area in the camera frame.
-                    val short = minOf(size.width, size.height)
-                    val px    = (short * 0.66f).toInt()
-                    val left  = ((size.width  - px) / 2).toInt()
-                    val top   = ((size.height - px) / 2).toInt()
-                    drawImage(imgBitmap, IntOffset.Zero, IntSize(bmp.width, bmp.height),
-                        IntOffset(left, top), IntSize(px, px))
-                }
             }
         }
 

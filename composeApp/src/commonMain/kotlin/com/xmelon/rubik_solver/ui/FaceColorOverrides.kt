@@ -40,8 +40,10 @@ internal fun buildScanFaceOverrides(
     liveWbRgbs:          IntArray,
     colorPalette:        Map<CubeColor, Int>,
     facelets:            IntArray,
-    colorOverrides:      Map<Int, CubeColor>
+    colorOverrides:      Map<Int, CubeColor>,
+    opaque:              Boolean = false
 ): Map<Face, Array<Color?>> {
+    val tileAlpha = if (opaque) 1f else 0.85f
     val result = mutableMapOf<Face, Array<Color?>>()
 
     // For every unscanned face show the expected center color so the user
@@ -50,8 +52,8 @@ internal fun buildScanFaceOverrides(
         if (!isFaceScanned(facelets, f)) {
             result[f] = Array(9) { idx ->
                 if (idx == 4) CubeColor.expectedCenter(f).let { ec ->
-                    colorPalette[ec]?.let { Color(it).copy(alpha = 0.85f) }
-                        ?: ec.toComposeColor().copy(alpha = 0.85f)
+                    colorPalette[ec]?.let { Color(it).copy(alpha = tileAlpha) }
+                        ?: ec.toComposeColor().copy(alpha = tileAlpha)
                 } else null
             }
         }
@@ -89,17 +91,17 @@ internal fun buildScanFaceOverrides(
                 // Center tile is always locked to the expected color — never the live camera value.
                 val ec    = CubeColor.expectedCenter(f)
                 val palWb = colorPalette[ec]
-                if (palWb != null) Color(palWb).copy(alpha = 0.85f)
-                else ec.toComposeColor().copy(alpha = 0.85f)
+                if (palWb != null) Color(palWb).copy(alpha = tileAlpha)
+                else ec.toComposeColor().copy(alpha = tileAlpha)
             } else if (live != null) {
                 // Manually overridden tiles show the reference color so the user
                 // can clearly see which classification they've set (not the camera color).
                 if (colorOverrides.containsKey(ci)) {
-                    live.toComposeColor().copy(alpha = 0.85f)
+                    live.toComposeColor().copy(alpha = tileAlpha)
                 } else {
                     val avgWb = liveGroupAvgRgb[live.ordinal]
-                    if (avgWb != 0) Color(avgWb).copy(alpha = 0.85f)
-                    else live.toComposeColor().copy(alpha = 0.85f)
+                    if (avgWb != 0) Color(avgWb).copy(alpha = tileAlpha)
+                    else live.toComposeColor().copy(alpha = tileAlpha)
                 }
             } else null
         }

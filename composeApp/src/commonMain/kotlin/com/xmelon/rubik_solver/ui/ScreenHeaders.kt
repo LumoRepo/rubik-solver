@@ -24,6 +24,7 @@ import com.xmelon.rubik_solver.generated.resources.solve_direction_counterclockw
 import com.xmelon.rubik_solver.generated.resources.solve_dir_180
 import com.xmelon.rubik_solver.generated.resources.solve_dir_ccw
 import com.xmelon.rubik_solver.generated.resources.solve_dir_cw
+import com.xmelon.rubik_solver.generated.resources.solve_error_hint
 import com.xmelon.rubik_solver.generated.resources.solve_error_title
 import com.xmelon.rubik_solver.generated.resources.solve_face_back
 import com.xmelon.rubik_solver.generated.resources.solve_face_bottom
@@ -155,5 +156,12 @@ internal fun SolveHeader(
             color = if (errorResult != null) MaterialTheme.colorScheme.error
                     else MaterialTheme.colorScheme.onSurfaceVariant,
             minLines = 2)
+        if (errorResult != null) {
+            Text(
+                stringResource(Res.string.solve_error_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }

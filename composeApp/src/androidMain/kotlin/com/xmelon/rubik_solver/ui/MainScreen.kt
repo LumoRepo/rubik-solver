@@ -2,6 +2,7 @@ package com.xmelon.rubik_solver.ui
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +11,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.xmelon.rubik_solver.AppMode
 import com.xmelon.rubik_solver.AppViewModel
@@ -115,6 +119,7 @@ private fun ColumnScope.ScanModeLayout(
     val liveColors by analyzer.detectedColors.collectAsState()
     val liveRgbs by analyzer.detectedRgbs.collectAsState()
     val liveWbRgbs by analyzer.detectedWbRgbs.collectAsState()
+    val debugBitmap by analyzer.debugBitmap.collectAsState()
 
     val effectiveLiveColors by remember {
         derivedStateOf {
@@ -147,7 +152,8 @@ private fun ColumnScope.ScanModeLayout(
     ) {
         buildScanFaceOverrides(
             currentFace, effectiveLiveColors, vm.isAwaitingAlignment,
-            liveWbRgbs, vm.colorPalette, facelets, vm.colorOverrides
+            liveWbRgbs, vm.colorPalette, facelets, vm.colorOverrides,
+            opaque = vm.isViewingScanned
         )
     }
     val finalFaceOverrides = if (vm.debugMode && !vm.isAwaitingAlignment) {
@@ -216,6 +222,20 @@ private fun ColumnScope.ScanModeLayout(
                     }
                 }
             )
+            // Debug overlay sits above Cube3DView so LAB text is visible over the color grid
+            if (vm.debugMode) {
+                debugBitmap?.let { bmp ->
+                    val imgBitmap = bmp.asImageBitmap()
+                    Canvas(Modifier.fillMaxSize()) {
+                        val short = minOf(size.width, size.height)
+                        val px    = (short * 0.66f).toInt()
+                        val left  = ((size.width  - px) / 2).toInt()
+                        val top   = ((size.height - px) / 2).toInt()
+                        drawImage(imgBitmap, IntOffset.Zero, IntSize(bmp.width, bmp.height),
+                            IntOffset(left, top), IntSize(px, px))
+                    }
+                }
+            }
             // Debug button sits above Cube3DView so it receives touches first
             Surface(
                 onClick = { vm.toggleDebugMode() },

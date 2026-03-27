@@ -30,11 +30,6 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
         private const val TAG = "CubeFrameAnalyzer"
         private const val TEMPORAL_BUFFER_SIZE = 8
         private const val CENTER_STABLE_FRAMES = 10
-        // NLL gate for center tile: is it plausibly the expected color?
-        // With camera-tuned priors, correct tiles score 5.8–7.0 (BLUE/GREEN highest).
-        // A completely wrong tile (e.g. GREEN in WHITE center) scores 15–35+.
-        // Threshold 7.5 admits all correct tiles with headroom and rejects misaligned ones.
-        private const val CENTER_STABLE_MAX_NLL = 7.5f
         private const val SCAN_FRAME_INTERVAL_MS = 1000L
         // Pixels with R+G+B <= this are near-black (lens dirt / border) and excluded from
         // tile LAB extraction and debug bitmap rendering.
@@ -213,15 +208,14 @@ class CubeFrameAnalyzer : ImageAnalysis.Analyzer, FrameAnalyzer {
             frameRgbs[i] = LabConverter.labToSRgb(smoothedLab[i])
         }
 
-        // 4. Center stability: expected color's NLL for center tile is below threshold,
+        // 4. Center stability: center tile's top-ranked color must equal the expected color,
         // sustained for N consecutive frames.
-        // This bypasses the winner-takes-all classifier — an orange tile can have NLL 7.8
-        // vs the ORANGE prior even while RED (NLL 6.4) "wins" the classification contest.
-        // Threshold 8.2 admits all expected colors (max prior NLL ≈ 7.8 for ORANGE) while
-        // rejecting a clearly wrong tile (e.g. GREEN in WHITE center scores 17+).
+        // Using rank (classify) rather than an absolute NLL threshold so the check works
+        // across cameras whose color rendering differs from the tuned priors — a tile that
+        // consistently ranks #1 as the expected color IS that color, regardless of the raw NLL.
         val expected = expectedCenterColor
         val centerMatch = expected != null
-                && colorDetector.scoreFor(expected, smoothedLab[4]) < CENTER_STABLE_MAX_NLL
+                && colorDetector.classify(smoothedLab[4]).first == expected
         val newCount = if (centerMatch)
             consecutiveCenterInRange.updateAndGet { minOf(it + 1, CENTER_STABLE_FRAMES) }
         else {

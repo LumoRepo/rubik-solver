@@ -53,6 +53,7 @@
 
     <!-- ── Solve screen ──────────────────────────────────────────────────── -->
     <string name="solve_error_title">Invalid Scan</string>
+    <string name="solve_error_hint">Use the ← button to go back and correct any misidentified tiles.</string>
     <string name="solve_initial_title">Initial Position</string>
     <string name="solve_initial_subtitle">Rotate cube to face RED with WHITE on top</string>
     <!-- %1$s = move notation (e.g. "R"), %2$s = face name (e.g. "Right"), %3$s = short direction (e.g. "CW") -->
